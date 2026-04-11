@@ -97,7 +97,6 @@ export async function POST(request: NextRequest) {
         
         console.log(`[WEBHOOK] Mensagem de ${from}: "${messageText}" (fromMe: ${isFromMe})`);
         
-        // Salvar mensagem recebida
         if (!isFromMe && messageText) {
           await saveMessage({
             instanceName,
@@ -119,41 +118,51 @@ export async function POST(request: NextRequest) {
           continue;
         }
         
+        let triggered = false;
+        
         // Verificar triggers (palavras-chave)
         console.log('[WEBHOOK] Verificando triggers...');
         const triggers = await getActiveTriggers();
-        console.log('[WEBHOOK] Triggers encontrados:', triggers.length);
+        console.log('[WEBHOOK] Triggers encontrados:', triggers.length, triggers);
         
         for (const trigger of triggers) {
           const triggerInstance = trigger.instance_name;
           if (triggerInstance && triggerInstance !== instanceName) continue;
           
-          const keyword = trigger.keyword?.toLowerCase() || '';
-          const messageLower = messageText.toLowerCase();
+          const keyword = (trigger.keyword || '').toLowerCase().trim();
+          const messageLower = messageText.toLowerCase().trim();
           
           let shouldTrigger = false;
           if (keyword && messageLower.includes(keyword)) {
             shouldTrigger = true;
-            console.log(`[WEBHOOK] Trigger ativado! Keyword: "${keyword}"`);
+            console.log(`[WEBHOOK] Trigger ativado! Keyword: "${keyword}" para "${messageLower}"`);
           } else if (!keyword) {
             shouldTrigger = true;
           }
           
-          if (shouldTrigger && trigger.target_type === 'flow' && trigger.target_id) {
-            const flows = await getActiveFlows();
-            const flow = flows.find((f: any) => f.id === trigger.target_id);
-            if (flow) {
-              console.log(`[WEBHOOK] Executando fluxo via trigger: ${flow.name}`);
-              executeFlow(flow, instanceName, from);
-            }
-          } else if (shouldTrigger && trigger.target_type === 'sequence' && trigger.target_id) {
-            const sequences = await getActiveSequences();
-            const sequence = sequences.find((s: any) => s.id === trigger.target_id);
-            if (sequence) {
-              console.log(`[WEBHOOK] Executando sequência via trigger: ${sequence.name}`);
-              executeSequence(sequence, instanceName, from);
+          if (shouldTrigger) {
+            triggered = true;
+            if (trigger.target_type === 'flow' && trigger.target_id) {
+              const flows = await getActiveFlows();
+              const flow = flows.find((f: any) => f.id === trigger.target_id);
+              if (flow) {
+                console.log(`[WEBHOOK] Executando fluxo via trigger: ${flow.name}`);
+                await executeFlow(flow, instanceName, from);
+              }
+            } else if (trigger.target_type === 'sequence' && trigger.target_id) {
+              const sequences = await getActiveSequences();
+              const sequence = sequences.find((s: any) => s.id === trigger.target_id);
+              if (sequence) {
+                console.log(`[WEBHOOK] Executando sequência via trigger: ${sequence.name}`);
+                await executeSequence(sequence, instanceName, from);
+              }
             }
           }
+        }
+        
+        if (triggered) {
+          console.log('[WEBHOOK] Trigger executado, pulando verificação automática');
+          return NextResponse.json({ success: true, triggered: true });
         }
         
         // Verificar fluxos ativos (execução automática)
@@ -170,7 +179,7 @@ export async function POST(request: NextRequest) {
           
           if (!triggerNode) {
             console.log(`[WEBHOOK] Executando fluxo "${flow.name}" (sem trigger)`);
-            executeFlow(flow, instanceName, from);
+            await executeFlow(flow, instanceName, from);
             continue;
           }
           
@@ -190,7 +199,7 @@ export async function POST(request: NextRequest) {
           
           if (shouldExecute) {
             console.log(`[WEBHOOK] Condição aceita, executando fluxo "${flow.name}"`);
-            executeFlow(flow, instanceName, from);
+            await executeFlow(flow, instanceName, from);
           }
         }
         
@@ -204,7 +213,7 @@ export async function POST(request: NextRequest) {
           if (seqInstance && seqInstance !== instanceName) continue;
           
           console.log(`[WEBHOOK] Executando sequência "${sequence.name}"`);
-          executeSequence(sequence, instanceName, from);
+          await executeSequence(sequence, instanceName, from);
         }
       }
     }
