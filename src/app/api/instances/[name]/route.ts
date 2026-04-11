@@ -60,6 +60,18 @@ export async function PUT(
         );
       }
       
+      // Verificar se a instância existe
+      const instances = await evolutionApi.getInstances();
+      const found = instances.find((i: any) => i.name === name || i.id === name);
+      
+      if (!found) {
+        console.log('[API] Instance not found:', name);
+        return NextResponse.json(
+          { error: `Instância "${name}" não encontrada. Recarregue a página.` },
+          { status: 404 }
+        );
+      }
+      
       console.log('[API] Setting webhook for', name, 'to', webhookUrl);
       
       await evolutionApi.setWebhook(name, webhookUrl);
