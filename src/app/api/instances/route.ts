@@ -6,19 +6,19 @@ export async function GET() {
     const response = await evolutionApi.getInstances();
     
     const instances = await Promise.all(
-      response.instances.map(async (instance) => {
+      response.map(async (item) => {
         try {
-          const info = await evolutionApi.getInstanceInfo(instance.instanceName);
+          const info = await evolutionApi.getInstanceInfo(item.instance.instanceName);
           return {
-            id: instance.instanceName,
-            name: instance.instanceName,
-            status: evolutionApi.mapStatus(info.instance.status),
-            phoneNumber: info.instance.owner || '',
+            id: item.instance.instanceName,
+            name: item.instance.instanceName,
+            status: evolutionApi.mapStatus(info.instance.state),
+            phoneNumber: item.instance.owner?.replace('@s.whatsapp.net', '') || '',
           };
         } catch {
           return {
-            id: instance.instanceName,
-            name: instance.instanceName,
+            id: item.instance.instanceName,
+            name: item.instance.instanceName,
             status: 'disconnected' as const,
             phoneNumber: '',
           };
@@ -28,7 +28,7 @@ export async function GET() {
 
     return NextResponse.json(instances);
   } catch (error) {
-    console.error('Error fetching instances:', error);
+    console.error('[API] Error fetching instances:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch instances' },
       { status: 500 }
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       status: 'connecting',
     });
   } catch (error) {
-    console.error('Error creating instance:', error);
+    console.error('[API] Error creating instance:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to create instance' },
       { status: 500 }

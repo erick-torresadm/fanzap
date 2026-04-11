@@ -7,31 +7,37 @@ interface CreateInstanceResponse {
     instanceId: string;
     status: string;
   };
-}
-
-interface InstanceQRCode {
-  qrcode: {
-    code: string;
-    base64: string;
+  hash?: {
+    apikey: string;
   };
+  settings?: Record<string, unknown>;
 }
 
 interface InstanceInfo {
   instance: {
     instanceName: string;
+    state: string;
+  };
+}
+
+interface FetchInstancesResponse {
+  instance: {
+    instanceName: string;
     instanceId: string;
-    owner: string;
+    owner?: string;
+    profileName?: string;
     status: string;
   };
 }
 
-interface SendMessageResponse {
-  key: {
-    id: string;
-    remote: string;
-    fromMe: boolean;
-    timestamp: number;
+interface ConnectResponse {
+  qrCode?: {
+    code: string;
+    base64: string;
   };
+  pairingCode?: string;
+  code?: string;
+  count?: number;
 }
 
 export class EvolutionAPI {
@@ -57,46 +63,30 @@ export class EvolutionAPI {
       body: JSON.stringify({
         instanceName,
         qrcode: true,
+        integration: 'WHATSAPP-BAILEYS',
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to create instance');
+      const error = await response.json().catch(() => ({ message: 'Failed to create instance' }));
+      throw new Error(error.message || error.response?.message || 'Failed to create instance');
     }
 
     return response.json();
   }
 
-  async connectInstance(instanceName: string): Promise<InstanceQRCode> {
+  async connectInstance(instanceName: string): Promise<ConnectResponse> {
     const response = await fetch(`${this.baseUrl}/instance/connect/${instanceName}`, {
       method: 'GET',
       headers: this.getHeaders(),
     });
 
-    const text = await response.text();
-    
     if (!response.ok) {
-      let error;
-      try {
-        error = JSON.parse(text);
-      } catch {
-        error = { message: text };
-      }
-      throw new Error(error.message || `Failed to get QR code (${response.status})`);
+      const error = await response.json().catch(() => ({ message: 'Failed to get QR code' }));
+      throw new Error(error.message || 'Failed to get QR code');
     }
 
-    try {
-      const data = JSON.parse(text);
-      return {
-        qrcode: {
-          code: data.code || data.qrCode?.code || '',
-          base64: data.qrCode || data.base64 || data.qrcode?.base64 || '',
-        },
-      };
-    } catch {
-      throw new Error('Invalid QR code response');
-    }
+    return response.json();
   }
 
   async getInstanceInfo(instanceName: string): Promise<InstanceInfo> {
@@ -106,25 +96,26 @@ export class EvolutionAPI {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: 'Failed to get instance info' }));
       throw new Error(error.message || 'Failed to get instance info');
     }
 
     return response.json();
   }
 
-  async getInstances(): Promise<{ instances: Array<{ instanceName: string; status: string }> }> {
-    const response = await fetch(`${this.baseUrl}/instance/findAll`, {
+  async getInstances(): Promise<FetchInstancesResponse[]> {
+    const response = await fetch(`${this.baseUrl}/instance/fetchInstances`, {
       method: 'GET',
       headers: this.getHeaders(),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: 'Failed to get instances' }));
       throw new Error(error.message || 'Failed to get instances');
     }
 
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   }
 
   async deleteInstance(instanceName: string): Promise<void> {
@@ -134,46 +125,37 @@ export class EvolutionAPI {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: 'Failed to delete instance' }));
       throw new Error(error.message || 'Failed to delete instance');
     }
   }
 
-  async sendMessage(instanceName: string, number: string, text: string): Promise<SendMessageResponse> {
+  async logoutInstance(instanceName: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/instance/logout/${instanceName}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to logout instance' }));
+      throw new Error(error.message || 'Failed to logout instance');
+    }
+  }
+
+  async sendMessage(instanceName: string, number: string, text: string): Promise<void> {
     const response = await fetch(`${this.baseUrl}/message/sendText/${instanceName}`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({
-        number: number.replace('@s.whatsapp.net', ''),
+        number: number.replace('@s.whatsapp.net', '').replace(/\D/g, ''),
         text,
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: 'Failed to send message' }));
       throw new Error(error.message || 'Failed to send message');
     }
-
-    return response.json();
-  }
-
-  async sendMedia(instanceName: string, number: string, mediaUrl: string, caption?: string): Promise<SendMessageResponse> {
-    const response = await fetch(`${this.baseUrl}/message/sendMedia/${instanceName}`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify({
-        number: number.replace('@s.whatsapp.net', ''),
-        mediaUrl,
-        caption,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to send media');
-    }
-
-    return response.json();
   }
 
   mapStatus(evolutionStatus: string): 'connected' | 'disconnected' | 'connecting' {
@@ -181,8 +163,6 @@ export class EvolutionAPI {
       'open': 'connected',
       'close': 'disconnected',
       'connecting': 'connecting',
-      'connected': 'connected',
-      'disconnected': 'disconnected',
     };
     return statusMap[evolutionStatus] || 'disconnected';
   }

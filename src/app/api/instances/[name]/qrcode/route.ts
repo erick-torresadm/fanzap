@@ -18,36 +18,26 @@ export async function GET(
       },
     });
     
-    const text = await response.text();
+    const data = await response.json();
     
     if (!response.ok) {
       return NextResponse.json(
-        { error: `Evolution API error: ${text}`, code: response.status },
+        { error: data.message || `Evolution API error: ${response.status}` },
         { status: response.status }
       );
     }
-    
-    const data = JSON.parse(text);
-    
-    // Evolution API v2 response format:
-    // { pairingCode: "WZYEH1YY", code: "2@y8eK+...", count: 1 }
-    // OR for QR code:
-    // { qrCode: { code: "...", base64: "data:image/png;base64,..." } }
     
     let qrCode = '';
     let base64 = '';
     let pairingCode = '';
     
     if (data.pairingCode) {
-      // Device pairing code mode
       pairingCode = data.pairingCode;
       qrCode = data.code || '';
     } else if (data.qrCode) {
-      // QR Code mode
       qrCode = data.qrCode.code || data.qrCode || '';
       base64 = data.qrCode.base64 || data.base64 || '';
     } else if (data.code && data.code.startsWith('2@')) {
-      // Legacy format
       qrCode = data.code || '';
     }
     
