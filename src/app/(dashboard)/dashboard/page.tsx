@@ -11,10 +11,10 @@ import {
 import { useState, useEffect } from 'react';
 
 const stats = [
-  { title: 'Mensagens Hoje', value: '0', icon: Send, color: '[#00D9FF]' },
-  { title: 'Instâncias', value: '0', icon: MessageSquare, color: '[#00C853]' },
-  { title: 'Fluxos Ativos', value: '0', icon: GitBranch, color: '[#FFB300]' },
-  { title: 'Contatos', value: '0', icon: Users, color: '[#0F0F0F]' },
+  { title: 'Mensagens Hoje', value: '0', icon: Send },
+  { title: 'Instâncias', value: '0', icon: MessageSquare },
+  { title: 'Fluxos Ativos', value: '0', icon: GitBranch },
+  { title: 'Contatos', value: '0', icon: Users },
 ];
 
 export default function DashboardPage() {
@@ -25,13 +25,23 @@ export default function DashboardPage() {
     fetch('/api/instances')
       .then(res => res.json())
       .then(data => {
-        setInstances(data);
+        if (Array.isArray(data)) {
+          setInstances(data);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
 
-  const connectedCount = instances.filter((i: any) => i.status === 'connected').length;
+  const connectedCount = Array.isArray(instances) ? instances.filter((i: any) => i.status === 'connected').length : 0;
+
+  const getStatValue = (index: number) => {
+    if (loading) return <Loader2 className="w-6 h-6 animate-spin" />;
+    if (index === 1) return connectedCount;
+    return stats[index].value;
+  };
+
+  const statColors = ['bg-[#00D9FF]/10 text-[#00D9FF]', 'bg-[#00C853]/10 text-[#00C853]', 'bg-[#FFB300]/10 text-[#FFB300]', 'bg-[#0F0F0F]/10 text-[#0F0F0F]'];
 
   return (
     <div className="p-8">
@@ -47,11 +57,11 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm text-[#6B7280]">{stat.title}</p>
                 <p className="text-3xl font-bold font-mono">
-                  {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : i === 1 ? connectedCount : stat.value}
+                  {getStatValue(i)}
                 </p>
               </div>
-              <div className={`w-12 h-12 bg-${stat.color}/10 rounded-xl flex items-center justify-center`}>
-                <stat.icon className={`w-5 h-5 text-${stat.color}`} />
+              <div className={`w-12 h-12 ${statColors[i]} rounded-xl flex items-center justify-center`}>
+                <stat.icon className="w-5 h-5" />
               </div>
             </div>
           </div>
@@ -64,7 +74,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
           </div>
-        ) : instances.length === 0 ? (
+        ) : !Array.isArray(instances) || instances.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-[#6B7280] mb-4">Nenhuma instância conectada</p>
             <a href="/instances" className="btn btn-primary btn-sm">

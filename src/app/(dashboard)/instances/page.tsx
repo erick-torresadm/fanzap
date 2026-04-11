@@ -42,12 +42,16 @@ export default function InstancesPage() {
     try {
       setLoading(true);
       const res = await fetch('/api/instances');
-      if (!res.ok) throw new Error('Falha ao buscar');
       const data = await res.json();
-      setInstances(data);
+      if (Array.isArray(data)) {
+        setInstances(data);
+      } else {
+        setInstances([]);
+      }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro');
+      setInstances([]);
     } finally {
       setLoading(false);
     }
