@@ -290,7 +290,7 @@ export default function InstancesPage() {
                     </button>
                   )}
                   <button 
-                    onClick={() => handleDelete(inst.id)}
+                    onClick={() => handleDelete(inst.name)}
                     className="btn btn-sm btn-ghost text-[#FF3D00]"
                   >
                     <Trash2 className="w-4 h-4" />
