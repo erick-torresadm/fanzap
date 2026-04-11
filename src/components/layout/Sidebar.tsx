@@ -9,10 +9,9 @@ import {
   Clock, 
   Zap, 
   Settings,
-  Users,
   Send,
   LogOut,
-  User
+  Bug
 } from 'lucide-react';
 
 const navItems = [
@@ -21,6 +20,7 @@ const navItems = [
   { href: '/flows', icon: GitBranch, label: 'Fluxos' },
   { href: '/sequences', icon: Clock, label: 'Sequências' },
   { href: '/triggers', icon: Zap, label: 'Gatilhos' },
+  { href: '/debug', icon: Bug, label: 'Debug' },
   { href: '/teste', icon: Send, label: 'Teste' },
   { href: '/settings', icon: Settings, label: 'Configurações' },
 ];
