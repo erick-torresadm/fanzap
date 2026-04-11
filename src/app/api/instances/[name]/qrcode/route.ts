@@ -21,6 +21,12 @@ export async function GET(
     const data = await response.json();
     
     if (!response.ok) {
+      if (response.status === 404) {
+        return NextResponse.json(
+          { qrCode: '', code: '', pairingCode: '', message: 'Instância não encontrada. Crie uma nova.' },
+          { status: 200 }
+        );
+      }
       return NextResponse.json(
         { error: data.message || `Evolution API error: ${response.status}`, qrCode: '', code: '', pairingCode: '' },
         { status: response.status }
