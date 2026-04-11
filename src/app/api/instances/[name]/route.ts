@@ -7,28 +7,30 @@ export async function GET(
 ) {
   try {
     const { name } = await params;
-    const info = await evolutionApi.getInstanceInfo(name);
     
-    return NextResponse.json({
-      id: name,
-      name: name,
-      status: evolutionApi.mapStatus(info.instance?.state || 'close'),
-    });
-  } catch (error) {
     const instances = await evolutionApi.getInstances();
     const found = instances.find((i: any) => i.name === name || i.id === name);
     
-    if (found) {
-      return NextResponse.json({
-        id: (found as any).id || (found as any).name,
-        name: (found as any).name || found.id,
-        status: evolutionApi.mapStatus(found.connectionStatus || 'disconnected'),
-      });
+    if (!found) {
+      return NextResponse.json(
+        { error: 'Instância não encontrada' },
+        { status: 404 }
+      );
     }
     
+    const instanceName = found.name;
+    const status = evolutionApi.mapStatus(found.connectionStatus || 'disconnected');
+    
+    return NextResponse.json({
+      id: found.id || found.name,
+      name: instanceName,
+      status: status,
+    });
+  } catch (error) {
+    console.error('[API] Error getting instance:', error);
     return NextResponse.json(
-      { error: 'Instância não encontrada' },
-      { status: 404 }
+      { error: error instanceof Error ? error.message : 'Erro ao buscar instância' },
+      { status: 500 }
     );
   }
 }
