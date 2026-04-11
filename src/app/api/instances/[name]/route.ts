@@ -20,9 +20,9 @@ export async function GET(
     
     if (found) {
       return NextResponse.json({
-        id: found.id || found.name,
-        name: found.name,
-        status: evolutionApi.mapStatus(found.connectionStatus || 'close'),
+        id: (found as any).id || (found as any).name,
+        name: (found as any).name || found.id,
+        status: evolutionApi.mapStatus(found.connectionStatus || 'disconnected'),
       });
     }
     
@@ -46,7 +46,7 @@ export async function DELETE(
       const instances = await evolutionApi.getInstances();
       const found = instances.find((i: any) => i.name === name || i.id === name);
       if (found) {
-        await evolutionApi.deleteInstance(found.name);
+        await evolutionApi.deleteInstance(String(found.name || name));
         return NextResponse.json({ success: true });
       }
     } catch {}

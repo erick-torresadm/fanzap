@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { evolutionApi } from '@/lib/evolution-api';
+import { sequencesStore } from '@/lib/sequences-store';
 
 export async function POST(request: Request) {
   try {
@@ -12,14 +13,12 @@ export async function POST(request: Request) {
       );
     }
     
-    const sequenceRepo = await import('../route.ts');
-    const sequences = sequenceRepo.sequences;
-    const sequence = sequences.get(sequenceId);
+    const sequence = sequencesStore.get(sequenceId);
     
     if (!sequence) {
       return NextResponse.json({ error: 'Sequência não encontrada' }, { status: 404 });
     }
-    
+
     const instanceName = sequence.instanceId;
     const cleanPhone = phoneNumber.replace(/\D/g, '');
     
@@ -45,7 +44,7 @@ export async function POST(request: Request) {
         results.push({ messageId: msg.id, success: false, error: err instanceof Error ? err.message : 'Erro' });
       }
     }
-    
+
     return NextResponse.json({
       success: true,
       sequenceId,

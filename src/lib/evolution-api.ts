@@ -21,13 +21,11 @@ interface InstanceInfo {
 }
 
 interface FetchInstancesResponse {
-  instance: {
-    instanceName: string;
-    instanceId: string;
-    owner?: string;
-    profileName?: string;
-    status: string;
-  };
+  name?: string;
+  id?: string;
+  connectionStatus?: string;
+  ownerJid?: string;
+  owner?: string;
 }
 
 interface ConnectResponse {

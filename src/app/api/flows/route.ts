@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server';
-
-const flows = new Map();
-
-function generateId() {
-  return Math.random().toString(36).substring(2, 15);
-}
+import { flowsStore, generateId } from '@/lib/flows-store';
 
 export async function GET() {
-  const allFlows = Array.from(flows.values());
+  const allFlows = Array.from(flowsStore.values());
   return NextResponse.json(allFlows);
 }
 
@@ -34,7 +29,7 @@ export async function POST(request: Request) {
       updatedAt: new Date().toISOString(),
     };
     
-    flows.set(flow.id, flow);
+    flowsStore.set(flow.id, flow);
     
     return NextResponse.json(flow);
   } catch (error) {

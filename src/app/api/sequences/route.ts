@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server';
-
-const sequences = new Map();
-const runningSequences = new Map();
-
-function generateId() {
-  return Math.random().toString(36).substring(2, 15);
-}
+import { sequencesStore, generateId } from '@/lib/sequences-store';
 
 export async function GET() {
-  const allSequences = Array.from(sequences.values());
+  const allSequences = Array.from(sequencesStore.values());
   return NextResponse.json(allSequences);
 }
 
@@ -40,7 +34,7 @@ export async function POST(request: Request) {
       updatedAt: new Date().toISOString(),
     };
     
-    sequences.set(sequence.id, sequence);
+    sequencesStore.set(sequence.id, sequence);
     
     return NextResponse.json(sequence);
   } catch (error) {
