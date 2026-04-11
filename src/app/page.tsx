@@ -1,172 +1,142 @@
 'use client';
 
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { 
   MessageSquare, 
   GitBranch, 
   Clock, 
   Zap, 
-  Users,
   ArrowRight,
-  CheckCircle2,
-  Layers,
-  MessageCircle,
-  Play,
-  BarChart3,
-  Shield,
-  Rocket,
-  Menu,
-  X
+  Check,
+  Zap as ZapIcon
 } from 'lucide-react';
 import { useState } from 'react';
 
 const features = [
-  {
-    icon: GitBranch,
-    title: 'Flow Builder Visual',
-    description: 'Crie automações arrastando e soltando.',
-  },
-  {
-    icon: MessageCircle,
-    title: 'Múltiplas Instâncias',
-    description: 'Conecte vários números de WhatsApp.',
-  },
-  {
-    icon: Clock,
-    title: 'Sequências',
-    description: 'Agende mensagens com intervalos.',
-  },
-  {
-    icon: Zap,
-    title: 'Gatilhos',
-    description: 'Ative fluxos por palavra-chave.',
-  },
+  { icon: GitBranch, title: 'Flow Builder Visual', desc: 'Crie automações com arrastar e soltar' },
+  { icon: MessageSquare, title: 'Múltiplas Instâncias', desc: 'Conecte vários números de WhatsApp' },
+  { icon: Clock, title: 'Sequências', desc: 'Agende mensagens com intervalos' },
+  { icon: Zap, title: 'Gatilhos', desc: 'Ative fluxos por palavra-chave' },
 ];
 
 const plans = [
-  {
-    name: 'Gratuito',
-    price: 'R$ 0',
-    features: ['1 instância', '1 fluxo', '50 msgs/mês'],
-  },
-  {
-    name: 'Básico',
-    price: 'R$ 97',
-    features: ['3 instâncias', '5 fluxos', '1.000 msgs/mês'],
-  },
-  {
-    name: 'Pro',
-    price: 'R$ 297',
-    features: ['10 instâncias', 'Fluxos ilimitados', '10.000 msgs/mês'],
-  },
+  { name: 'Gratuito', price: 'R$ 0', features: ['1 instância', '1 fluxo', '50 msgs/mês'] },
+  { name: 'Básico', price: 'R$ 97', features: ['3 instâncias', '5 fluxos', '1.000 msgs/mês'], popular: true },
+  { name: 'Pro', price: 'R$ 297', features: ['10 instâncias', 'Fluxos ilimitados', '10.000 msgs/mês'] },
 ];
 
 export default function Home() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
   return (
-    <div className="min-h-screen bg-white">
-      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-white/95 backdrop-blur">
-        <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight">Fanzap</span>
-          </div>
-          
-          <nav className="hidden md:flex items-center gap-6 text-sm">
-            <Link href="#features" className="text-gray-600 hover:text-gray-900">
-              Recursos
-            </Link>
-            <Link href="#pricing" className="text-gray-600 hover:text-gray-900">
-              Planos
-            </Link>
-          </nav>
-          
+    <div className="min-h-screen bg-[#FAFAFA]">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-[#E5E7EB]">
+        <div className="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm">Entrar</Button>
-            </Link>
-            <Link href="/dashboard">
-              <Button size="sm">Começar</Button>
-            </Link>
+            <div className="w-8 h-8 bg-[#0F0F0F] rounded flex items-center justify-center">
+              <span className="text-white font-bold font-mono">F</span>
+            </div>
+            <span className="text-lg font-bold font-mono tracking-tight">Fanzap</span>
+          </div>
+          <nav className="hidden md:flex items-center gap-8 text-sm">
+            <a href="#features" className="text-[#6B7280] hover:text-[#0F0F0F]">Recursos</a>
+            <a href="#pricing" className="text-[#6B7280] hover:text-[#0F0F0F]">Planos</a>
+          </nav>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className="text-sm text-[#6B7280] hover:text-[#0F0F0F]">Entrar</Link>
+            <Link href="/dashboard" className="btn btn-primary btn-sm">Começar</Link>
           </div>
         </div>
       </header>
 
-      <section className="pt-32 pb-16 px-4">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+      <section className="pt-36 pb-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-medium rounded-full mb-6">
+            <ZapIcon className="w-3 h-3" />
             Automação de WhatsApp
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold font-mono tracking-tight mb-6 leading-tight">
+            Sua automação de<br />
+            <span className="text-[#00D9FF]">WhatsApp</span> simplificada
           </h1>
-          <p className="text-lg text-gray-600 mb-8">
-            Crie fluxos de atendimento e vendas com arrastar e soltar.
+          <p className="text-xl text-[#6B7280] mb-10 max-w-2xl mx-auto">
+            Crie fluxos de atendimento e vendas com arrastar e soltar. 
+            Conecte seus números e deixe a automação trabalhar por você.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/dashboard">
-              <Button size="lg">
-                Criar Conta
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+            <Link href="/dashboard" className="btn btn-primary text-base px-8 py-3">
+              Criar Conta Grátis
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      <section id="features" className="py-16 px-4 bg-gray-50">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold mb-2">Recursos</h2>
-          </div>
+      <section id="features" className="py-20 px-6 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold font-mono text-center mb-12">Recursos Principais</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            {features.map((feature) => (
-              <Card key={feature.title} className="border-0 shadow-sm">
-                <CardHeader className="pb-2">
-                  <feature.icon className="h-6 w-6 mb-2 text-gray-900" />
-                  <CardTitle className="text-base">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
-                </CardContent>
-              </Card>
+            {features.map((f) => (
+              <div key={f.title} className="card flex items-start gap-4 hover:border-[#00D9FF] transition-colors">
+                <div className="w-12 h-12 bg-[#0F0F0F] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <f.icon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">{f.title}</h3>
+                  <p className="text-sm text-[#6B7280]">{f.desc}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="pricing" className="py-16 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold mb-2">Planos</h2>
-          </div>
+      <section id="pricing" className="py-20 px-6 bg-[#FAFAFA]">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold font-mono text-center mb-4">Planos e Preços</h2>
+          <p className="text-[#6B7280] text-center mb-12">Escolha o ideal para seu negócio</p>
           <div className="grid md:grid-cols-3 gap-6">
             {plans.map((plan) => (
-              <Card key={plan.name} className="border">
-                <CardHeader>
-                  <CardTitle className="text-lg">{plan.name}</CardTitle>
-                  <div className="text-2xl font-bold">{plan.price}</div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {plan.features.map((f) => (
-                      <li key={f} className="text-sm text-gray-600 flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-gray-400" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="w-full mt-4">Escolher</Button>
-                </CardContent>
-              </Card>
+              <div 
+                key={plan.name} 
+                className={`card relative ${plan.popular ? 'border-[#00D9FF] ring-1 ring-[#00D9FF]' : ''}`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="text-xs font-medium bg-[#00D9FF] text-[#0F0F0F] px-3 py-1 rounded-full">
+                      Mais популярний
+                    </span>
+                  </div>
+                )}
+                <h3 className="font-semibold text-lg mb-2">{plan.name}</h3>
+                <div className="text-3xl font-bold font-mono mb-4">
+                  {plan.price}
+                  {plan.price !== 'R$ 0' && <span className="text-sm font-normal text-[#6B7280]">/mês</span>}
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {plan.features.map((f) => (
+                    <li key={f} className="text-sm text-[#6B7280] flex items-center gap-2">
+                      <Check className="w-4 h-4 text-[#00C853]" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button className={`w-full btn ${plan.popular ? 'btn-primary' : 'btn-outline'}`}>
+                  {plan.price === 'R$ 0' ? 'Grátis' : 'Escolher'}
+                </button>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <footer className="py-8 px-4 border-t">
-        <div className="container mx-auto text-center text-sm text-gray-500">
-          © 2026 Fanzap. Todos os direitos reservados.
+      <footer className="py-8 px-6 border-t">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-[#0F0F0F] rounded flex items-center justify-center">
+              <span className="text-white text-xs font-bold font-mono">F</span>
+            </div>
+            <span className="text-sm font-mono">Fanzap</span>
+          </div>
+          <p className="text-sm text-[#6B7280]">© 2026 Fanzap. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

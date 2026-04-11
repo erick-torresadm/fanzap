@@ -1,9 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { 
   MessageSquare, 
   Plus, 
@@ -11,8 +8,11 @@ import {
   QrCode,
   Trash2,
   Loader2,
-  CheckCircle,
-  XCircle
+  Check,
+  XCircle,
+  Smartphone,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 
 interface Instance {
@@ -25,6 +25,7 @@ interface Instance {
 interface QRCodeData {
   qrCode: string;
   code: string;
+  pairingCode?: string;
 }
 
 export default function InstancesPage() {
@@ -54,6 +55,8 @@ export default function InstancesPage() {
 
   useEffect(() => {
     fetchInstances();
+    const interval = setInterval(fetchInstances, 10000);
+    return () => clearInterval(interval);
   }, [fetchInstances]);
 
   const handleCreate = async () => {
@@ -87,7 +90,7 @@ export default function InstancesPage() {
       const data = await res.json();
       
       if (!res.ok) {
-        throw new Error(data.error || 'Falha ao gerar QR');
+        throw new Error(data.error || 'Falha ao gerar código');
       }
       
       setQrCode(data);
@@ -105,9 +108,12 @@ export default function InstancesPage() {
             }
           }
         } catch { clearInterval(pollInterval); }
-      }, 5000);
+      }, 3000);
       
-      setTimeout(() => { clearInterval(pollInterval); setConnecting(null); }, 120000);
+      setTimeout(() => { 
+        clearInterval(pollInterval); 
+        setConnecting(null); 
+      }, 180000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro');
       setConnecting(null);
@@ -115,6 +121,7 @@ export default function InstancesPage() {
   };
 
   const handleDelete = async (name: string) => {
+    if (!confirm('Tem certeza que deseja excluir?')) return;
     try {
       const res = await fetch(`/api/instances/${name}`, { method: 'DELETE' });
       if (!res.ok) { const data = await res.json(); throw new Error(data.error); }
@@ -124,119 +131,167 @@ export default function InstancesPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Instâncias</h1>
-          <p className="text-gray-500 text-sm">Conecte seu WhatsApp</p>
+          <h1 className="text-2xl font-bold font-mono">Instâncias</h1>
+          <p className="text-[#6B7280]">Gerencie suas conexões WhatsApp</p>
         </div>
-        <Button onClick={() => setShowNew(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova
-        </Button>
+        <button onClick={() => setShowNew(true)} className="btn btn-primary">
+          <Plus className="w-4 h-4" />
+          Nova Instância
+        </button>
       </div>
 
       {error && (
-        <div className="p-3 mb-4 text-sm text-red-600 bg-red-50 rounded">
+        <div className="mb-6 p-4 bg-[#FF3D00]/10 border border-[#FF3D00]/20 rounded-lg text-[#FF3D00] text-sm">
           {error}
         </div>
       )}
 
       {showNew && (
-        <Card className="mb-4 p-4">
-          <div className="flex gap-2">
-            <Input 
-              placeholder="Nome da instância" 
+        <div className="card mb-6">
+          <h3 className="font-semibold mb-4">Criar Nova Instância</h3>
+          <div className="flex gap-3">
+            <input 
+              type="text" 
+              placeholder="Nome da instância (ex: empresa-vendas)" 
+              className="input flex-1"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="flex-1"
+              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             />
-            <Button onClick={handleCreate} disabled={creating || !newName.trim()}>
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar'}
-            </Button>
-            <Button variant="outline" onClick={() => setShowNew(false)}>Cancelar</Button>
+            <button onClick={handleCreate} disabled={creating || !newName.trim()} className="btn btn-primary">
+              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar'}
+            </button>
+            <button onClick={() => setShowNew(false)} className="btn btn-outline">Cancelar</button>
           </div>
-        </Card>
+        </div>
       )}
 
       {qrCode && (
-        <Card className="mb-4 p-6 text-center">
-          <h3 className="font-medium mb-4">Escaneie com WhatsApp</h3>
-          {qrCode.qrCode ? (
-            <img src={qrCode.qrCode} alt="QR Code" className="w-48 h-48 mx-auto border" />
-          ) : (
-            <div className="w-48 h-48 mx-auto bg-gray-100 flex items-center justify-center">
-              <QrCode className="h-12 w-12 text-gray-400" />
-            </div>
-          )}
-          <p className="text-sm text-gray-500 mt-2">
-            {connecting === 'connecting' ? 'Aguardando...' : 'Aguardando conexão...'}
+        <div className="card mb-6 text-center">
+          <h3 className="font-semibold mb-2">Conectar ao WhatsApp</h3>
+          <p className="text-sm text-[#6B7280] mb-6">Escaneie o QR Code com seu aplicativo WhatsApp</p>
+          
+          <div className="flex justify-center mb-6">
+            {qrCode.qrCode ? (
+              <div className="p-4 bg-white border-2 border-[#0F0F0F] rounded-lg inline-block">
+                <img src={qrCode.qrCode} alt="QR Code" className="w-56 h-56" />
+              </div>
+            ) : qrCode.pairingCode ? (
+              <div className="p-8 bg-[#FAFAFA] rounded-lg inline-block">
+                <p className="text-sm text-[#6B7280] mb-2">Código de Pareamento</p>
+                <p className="text-4xl font-mono font-bold tracking-widest">{qrCode.pairingCode}</p>
+              </div>
+            ) : (
+              <div className="w-56 h-56 bg-[#FAFAFA] flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-[#6B7280]" />
+              </div>
+            )}
+          </div>
+          
+          <p className="text-xs text-[#6B7280] mb-4">
+            {connecting ? 'Aguardando conexão...' : 'Aguardando QR Code...'}
           </p>
-          <Button variant="outline" className="mt-4" onClick={() => setQrCode(null)}>
-            Fechar
-          </Button>
-        </Card>
+          
+          <button onClick={() => { setQrCode(null); setConnecting(null); }} className="btn btn-outline">
+            Cancelar
+          </button>
+        </div>
       )}
 
-      {instances.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <p>Nenhuma instância</p>
-          <Button className="mt-4" onClick={() => setShowNew(true)}>
-            Criar primeira instância
-          </Button>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-[#6B7280]" />
+        </div>
+      ) : instances.length === 0 ? (
+        <div className="card text-center py-16">
+          <div className="w-16 h-16 bg-[#FAFAFA] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Smartphone className="w-8 h-8 text-[#6B7280]" />
+          </div>
+          <h3 className="font-semibold mb-2">Nenhuma instância</h3>
+          <p className="text-sm text-[#6B7280] mb-6">Crie sua primeira instância para começar</p>
+          <button onClick={() => setShowNew(true)} className="btn btn-primary">
+            <Plus className="w-4 h-4" />
+            Criar Instância
+          </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {instances.map((inst) => (
-            <Card key={inst.id} className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  inst.status === 'connected' ? 'bg-green-100' : 'bg-gray-100'
-                }`}>
-                  <MessageSquare className={`h-5 w-5 ${
-                    inst.status === 'connected' ? 'text-green-600' : 'text-gray-400'
-                  }`} />
-                </div>
-                <div>
-                  <div className="font-medium">{inst.name}</div>
-                  <div className="text-sm text-gray-500">
-                    {inst.phoneNumber || 'Não conectado'}
+            <div key={inst.id} className="card">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    inst.status === 'connected' 
+                      ? 'bg-[#00C853]/10' 
+                      : inst.status === 'connecting'
+                      ? 'bg-[#FFB300]/10'
+                      : 'bg-[#FAFAFA]'
+                  }`}>
+                    <MessageSquare className={`w-6 h-6 ${
+                      inst.status === 'connected' 
+                        ? 'text-[#00C853]' 
+                        : inst.status === 'connecting'
+                        ? 'text-[#FFB300]'
+                        : 'text-[#6B7280]'
+                    }`} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{inst.name}</h3>
+                    <p className="text-sm text-[#6B7280]">{inst.phoneNumber || 'Não conectado'}</p>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                {inst.status === 'connected' ? (
-                  <span className="flex items-center gap-1 text-sm text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    Conectado
-                  </span>
-                ) : inst.status === 'connecting' ? (
-                  <span className="flex items-center gap-1 text-sm text-amber-600">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Conectando
-                  </span>
-                ) : (
-                  <Button size="sm" onClick={() => handleConnect(inst.id)}>
-                    <QrCode className="h-4 w-4 mr-1" />
-                    Conectar
-                  </Button>
-                )}
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(inst.id)}>
-                  <Trash2 className="h-4 w-4 text-gray-400" />
-                </Button>
+              <div className="flex items-center justify-between pt-4 border-t border-[#E5E7EB]">
+                <div className="flex items-center gap-2">
+                  {inst.status === 'connected' && (
+                    <span className="badge badge-success">
+                      <Wifi className="w-3 h-3 mr-1" />
+                      Conectado
+                    </span>
+                  )}
+                  {inst.status === 'connecting' && (
+                    <span className="badge badge-warning">
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      Conectando
+                    </span>
+                  )}
+                  {inst.status === 'disconnected' && (
+                    <span className="badge badge-outline">
+                      <WifiOff className="w-3 h-3 mr-1" />
+                      Desconectado
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  {inst.status !== 'connected' && (
+                    <button 
+                      onClick={() => handleConnect(inst.id)}
+                      disabled={connecting === inst.id}
+                      className="btn btn-sm btn-primary"
+                    >
+                      {connecting === inst.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <QrCode className="w-4 h-4" />
+                      )}
+                      Conectar
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => handleDelete(inst.id)}
+                    className="btn btn-sm btn-ghost text-[#FF3D00]"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}

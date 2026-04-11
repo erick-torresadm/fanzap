@@ -20,10 +20,6 @@ export async function GET(
     
     const text = await response.text();
     
-    // Log para debug
-    console.log(`[QR Code] Instance: ${name}, Status: ${response.status}`);
-    console.log(`[QR Code] Response: ${text.substring(0, 500)}`);
-    
     if (!response.ok) {
       return NextResponse.json(
         { error: `Evolution API error: ${text}`, code: response.status },
@@ -33,13 +29,32 @@ export async function GET(
     
     const data = JSON.parse(text);
     
-    // A Evolution API pode retornar em diferentes formatos
-    const qrCode = data.qrCode || data.qrcode?.code || data.code || '';
-    const base64 = data.qrcode?.base64 || data.base64 || data.qrCode || '';
+    // Evolution API v2 response format:
+    // { pairingCode: "WZYEH1YY", code: "2@y8eK+...", count: 1 }
+    // OR for QR code:
+    // { qrCode: { code: "...", base64: "data:image/png;base64,..." } }
+    
+    let qrCode = '';
+    let base64 = '';
+    let pairingCode = '';
+    
+    if (data.pairingCode) {
+      // Device pairing code mode
+      pairingCode = data.pairingCode;
+      qrCode = data.code || '';
+    } else if (data.qrCode) {
+      // QR Code mode
+      qrCode = data.qrCode.code || data.qrCode || '';
+      base64 = data.qrCode.base64 || data.base64 || '';
+    } else if (data.code && data.code.startsWith('2@')) {
+      // Legacy format
+      qrCode = data.code || '';
+    }
     
     return NextResponse.json({
       qrCode: base64,
       code: qrCode,
+      pairingCode: pairingCode,
     });
   } catch (error) {
     console.error('[QR Code] Error:', error);
