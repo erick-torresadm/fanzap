@@ -138,13 +138,13 @@ export default function SequencesPage() {
   };
 
   const toggleSequenceStatus = async (seq: Sequence) => {
-    const updated = { ...seq, isActive: !seq.isActive };
+    const newStatus = !seq.isActive;
     await fetch(`/api/sequences/${seq.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated)
+      body: JSON.stringify({ isActive: newStatus })
     });
-    setSequences(sequences.map(s => s.id === seq.id ? updated : s));
+    setSequences(sequences.map(s => s.id === seq.id ? { ...s, isActive: newStatus } : s));
   };
 
   const deleteSequence = async (seq: Sequence) => {

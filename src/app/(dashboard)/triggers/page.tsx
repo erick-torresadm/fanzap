@@ -58,9 +58,23 @@ export default function TriggersPage() {
       const seqsData = await seqsRes.json();
       const instData = await instRes.json();
       
-      if (Array.isArray(triggersData)) setTriggers(triggersData);
-      if (Array.isArray(flowsData)) setFlows(flowsData);
-      if (Array.isArray(seqsData)) setSequences(seqsData);
+      if (Array.isArray(triggersData)) setTriggers(triggersData.map((t: any) => ({
+        ...t,
+        isActive: t.is_active,
+        instanceId: t.instance_name,
+        targetType: t.target_type,
+        targetId: t.target_id
+      })));
+      if (Array.isArray(flowsData)) setFlows(flowsData.map((f: any) => ({
+        ...f,
+        instanceId: f.instance_name,
+        isActive: f.is_active
+      })));
+      if (Array.isArray(seqsData)) setSequences(seqsData.map((s: any) => ({
+        ...s,
+        instanceId: s.instance_name,
+        isActive: s.is_active
+      })));
       if (Array.isArray(instData)) {
         setInstances(instData.filter((i: any) => i.status === 'connected'));
         if (instData.length > 0) {
@@ -81,7 +95,7 @@ export default function TriggersPage() {
       keyword: '',
       instanceName: instances[0]?.name || '',
       targetType: 'flow',
-      targetId: flows[0]?.id || ''
+      targetId: flows.length > 0 ? flows[0].id : (sequences.length > 0 ? sequences[0].id : '')
     });
     setShowModal(true);
   };
@@ -292,19 +306,52 @@ export default function TriggersPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-2">Executar</label>
+                <label className="block text-sm text-gray-600 mb-2">Tipo de alvo</label>
+                <select
+                  value={formData.targetType}
+                  onChange={(e) => {
+                    const type = e.target.value as 'flow' | 'sequence';
+                    const list = type === 'flow' ? flows : sequences;
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      targetType: type,
+                      targetId: list.length > 0 ? list[0].id : ''
+                    }));
+                  }}
+                  className="input"
+                >
+                  <option value="flow">Fluxo</option>
+                  <option value="sequence">Sequência</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">
+                  {formData.targetType === 'flow' ? 'Selecione o Fluxo' : 'Selecione a Sequência'}
+                </label>
                 <select
                   value={formData.targetId}
                   onChange={(e) => setFormData(prev => ({ ...prev, targetId: e.target.value }))}
                   className="input"
+                  disabled={(formData.targetType === 'flow' && flows.length === 0) || (formData.targetType === 'sequence' && sequences.length === 0)}
                 >
-                  <option value="">Selecione...</option>
-                  {formData.targetType === 'flow' && flows.map(flow => (
-                    <option key={flow.id} value={flow.id}>Fluxo: {flow.name}</option>
-                  ))}
-                  {formData.targetType === 'sequence' && sequences.map(seq => (
-                    <option key={seq.id} value={seq.id}>Sequência: {seq.name}</option>
-                  ))}
+                  {formData.targetType === 'flow' ? (
+                    flows.length === 0 ? (
+                      <option value="">Nenhum fluxo disponível</option>
+                    ) : (
+                      flows.map(flow => (
+                        <option key={flow.id} value={flow.id}>{flow.name}</option>
+                      ))
+                    )
+                  ) : (
+                    sequences.length === 0 ? (
+                      <option value="">Nenhuma sequência disponível</option>
+                    ) : (
+                      sequences.map(seq => (
+                        <option key={seq.id} value={seq.id}>{seq.name}</option>
+                      ))
+                    )
+                  )}
                 </select>
               </div>
 

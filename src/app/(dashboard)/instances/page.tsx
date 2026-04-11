@@ -142,20 +142,24 @@ export default function InstancesPage() {
     
     try {
       setConnecting(name);
+      setError(null);
       const res = await fetch(`/api/instances/${name}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'setWebhook', webhookUrl })
       });
       
+      const data = await res.json();
+      
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Erro ao configurar webhook');
       }
       
       alert('Webhook configurado com sucesso!');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao configurar webhook';
+      setError(errorMessage);
+      alert(errorMessage);
     } finally {
       setConnecting(null);
     }
