@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEvolutionApi } from '@/lib/evolution-api-factory';
-import { sql, query } from '@/lib/database';
+import { sql, query, getActiveFlows, getActiveSequences, getActiveTriggers, saveMessage } from '@/lib/database';
 
 async function getUserApiSettings(userId: string) {
   const result = await sql`SELECT api_url, api_key FROM user_api_settings WHERE user_id = ${userId}`;

@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const userCookie = request.cookies.get('fanzap_user');
   
   if (!userCookie) {
