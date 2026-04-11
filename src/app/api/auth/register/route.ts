@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
 
+function hashPassword(password: string): string {
+  const crypto = require('crypto');
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  return `${salt}:${hash}`;
+}
+
 export async function POST(request: Request) {
   try {
     const { name, email, password } = await request.json();
@@ -23,9 +30,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const hashedPassword = hashPassword(password);
+
     const result = await sql`
       INSERT INTO users (name, email, password, created_at, updated_at)
-      VALUES (${name}, ${email}, ${password}, NOW(), NOW())
+      VALUES (${name}, ${email}, ${hashedPassword}, NOW(), NOW())
       RETURNING id, email, name
     `;
 
@@ -44,9 +53,10 @@ export async function POST(request: Request) {
       email: user.email,
       name: user.name
     }), {
-      httpOnly: false,
+      httpOnly: true,
       path: '/',
       maxAge: 60 * 60 * 24 * 30,
+      sameSite: 'lax'
     });
 
     return response;

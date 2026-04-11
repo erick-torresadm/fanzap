@@ -1,6 +1,23 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
 
+function hashPassword(password: string): string {
+  const crypto = require('crypto');
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const crypto = require('crypto');
+  const parts = stored.split(':');
+  if (parts.length !== 2) return false;
+  const salt = parts[0];
+  const storedHash = parts[1];
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  return hash === storedHash;
+}
+
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
@@ -25,7 +42,9 @@ export async function POST(request: Request) {
 
     const user = result[0];
     
-    if (user.password !== password) {
+    const validPassword = verifyPassword(password, user.password);
+    
+    if (!validPassword) {
       return NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
@@ -45,9 +64,10 @@ export async function POST(request: Request) {
       email: user.email,
       name: user.name
     }), {
-      httpOnly: false,
+      httpOnly: true,
       path: '/',
       maxAge: 60 * 60 * 24 * 30,
+      sameSite: 'lax'
     });
 
     return response;

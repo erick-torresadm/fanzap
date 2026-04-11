@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
@@ -10,6 +10,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          router.push('/dashboard');
+        }
+      })
+      .catch(() => {});
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +40,6 @@ export default function LoginPage() {
         throw new Error(data.error || 'Erro ao fazer login');
       }
 
-      document.cookie = `fanzap_user=${JSON.stringify(data.user)}; path=/; max-age=2592000`;
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
