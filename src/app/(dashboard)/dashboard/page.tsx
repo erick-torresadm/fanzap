@@ -9,7 +9,6 @@ import {
   Loader2
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { FloatingMenu } from '@/components/FloatingMenu';
 
 const stats = [
   { title: 'Mensagens Hoje', value: '0', icon: Send },
@@ -46,7 +45,6 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8">
-      <FloatingMenu />
       <div className="mb-8">
         <h1 className="text-2xl font-bold font-mono">Dashboard</h1>
         <p className="text-[#6B7280]">Visão geral da sua automação</p>

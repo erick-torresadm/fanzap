@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { FloatingMenu } from '@/components/FloatingMenu';
 import { 
   Zap, 
   Plus, 
@@ -32,7 +31,6 @@ export default function TriggersPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <FloatingMenu />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Gatilhos</h1>

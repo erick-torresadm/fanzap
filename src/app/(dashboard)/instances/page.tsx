@@ -14,7 +14,6 @@ import {
   Wifi,
   WifiOff
 } from 'lucide-react';
-import { FloatingMenu } from '@/components/FloatingMenu';
 
 interface Instance {
   id: string;
@@ -138,7 +137,6 @@ export default function InstancesPage() {
 
   return (
     <div className="p-8">
-      <FloatingMenu />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold font-mono">Instâncias</h1>
