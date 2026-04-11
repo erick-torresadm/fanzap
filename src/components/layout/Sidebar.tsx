@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,97 +11,54 @@ import {
   Zap, 
   Settings,
   Users,
-  Menu,
-  X,
-  ChevronLeft
+  X
 } from 'lucide-react';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Instâncias', href: '/instances', icon: MessageSquare },
-  { name: 'Fluxos', href: '/flows', icon: GitBranch },
-  { name: 'Sequências', href: '/sequences', icon: Clock },
-  { name: 'Gatilhos', href: '/triggers', icon: Zap },
-];
-
-const secondaryNavigation = [
-  { name: 'Planos', href: '/plans', icon: Users },
-  { name: 'Configurações', href: '/settings', icon: Settings },
+const navItems = [
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/instances', icon: MessageSquare, label: 'Instâncias' },
+  { href: '/flows', icon: GitBranch, label: 'Fluxos' },
+  { href: '/sequences', icon: Clock, label: 'Sequências' },
+  { href: '/triggers', icon: Zap, label: 'Gatilhos' },
+  { href: '/plans', icon: Users, label: 'Planos' },
+  { href: '/settings', icon: Settings, label: 'Configurações' },
 ];
 
 export function Sidebar({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true);
   const pathname = usePathname();
 
   return (
-    <div className="flex h-screen bg-background">
-      <aside
-        className={cn(
-          'flex flex-col border-r bg-card transition-all duration-300',
-          isOpen ? 'w-64' : 'w-20'
-        )}
-      >
-        <div className="flex h-16 items-center justify-between border-b px-4">
-          {isOpen && (
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg">
-                F
-              </div>
-              <span className="text-xl font-bold tracking-tight">Fanzap</span>
-            </Link>
-          )}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="rounded-lg p-2 hover:bg-muted"
-          >
-            {isOpen ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+    <div className="flex min-h-screen bg-gray-50">
+      <aside className="w-56 bg-white border-r flex flex-col">
+        <div className="h-14 flex items-center px-4 border-b">
+          <Link href="/dashboard" className="font-bold text-lg">
+            Fanzap
+          </Link>
         </div>
 
-        <nav className="flex-1 space-y-1 p-3">
-          {navigation.map((item) => {
+        <nav className="flex-1 p-3 space-y-1">
+          {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link
-                key={item.name}
+                key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
                 )}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                {isOpen && <span>{item.name}</span>}
+                <item.icon className="h-4 w-4" />
+                {item.label}
               </Link>
             );
           })}
         </nav>
-
-        <div className="border-t p-3">
-          {secondaryNavigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                {isOpen && <span>{item.name}</span>}
-              </Link>
-            );
-          })}
-        </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1">
         {children}
       </main>
     </div>

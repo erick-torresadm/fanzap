@@ -74,12 +74,29 @@ export class EvolutionAPI {
       headers: this.getHeaders(),
     });
 
+    const text = await response.text();
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to get QR code');
+      let error;
+      try {
+        error = JSON.parse(text);
+      } catch {
+        error = { message: text };
+      }
+      throw new Error(error.message || `Failed to get QR code (${response.status})`);
     }
 
-    return response.json();
+    try {
+      const data = JSON.parse(text);
+      return {
+        qrcode: {
+          code: data.code || data.qrCode?.code || '',
+          base64: data.qrCode || data.base64 || data.qrcode?.base64 || '',
+        },
+      };
+    } catch {
+      throw new Error('Invalid QR code response');
+    }
   }
 
   async getInstanceInfo(instanceName: string): Promise<InstanceInfo> {
