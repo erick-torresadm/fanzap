@@ -5,6 +5,10 @@ const sql: any = neon(databaseUrl);
 
 export { sql };
 
+function query(sqlText: string, params: any[] = []) {
+  return sql.query(sqlText, params);
+}
+
 // Flows
 export async function getFlows() {
   return await sql`SELECT * FROM flows ORDER BY created_at DESC`;
@@ -52,8 +56,8 @@ export async function updateFlow(id: string, updates: { name?: string; descripti
   
   if (fields.length === 0) return null;
   
-  const query = `UPDATE flows SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`;
-  const result = await sql(query, values);
+  const queryStr = `UPDATE flows SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`;
+  const result = await query(queryStr, values);
   return result[0];
 }
 
@@ -109,8 +113,8 @@ export async function updateSequence(id: string, updates: { name?: string; messa
   
   if (fields.length === 0) return null;
   
-  const query = `UPDATE sequences SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`;
-  const result = await sql(query, values);
+  const queryStr = `UPDATE sequences SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`;
+  const result = await query(queryStr, values);
   return result[0];
 }
 
@@ -174,8 +178,8 @@ export async function updateTrigger(id: string, updates: { name?: string; keywor
   
   if (fields.length === 0) return null;
   
-  const query = `UPDATE triggers SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`;
-  const result = await sql(query, values);
+  const queryStr = `UPDATE triggers SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`;
+  const result = await query(queryStr, values);
   return result[0];
 }
 

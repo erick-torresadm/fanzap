@@ -31,11 +31,15 @@ export async function PUT(
     const { id } = await params;
     const updates = await request.json();
     
+    console.log('[API] PUT sequence:', id, updates);
+    
     const dbUpdates: { name?: string; messages?: any; isActive?: boolean } = {};
     
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.messages !== undefined) dbUpdates.messages = updates.messages;
-    if (updates.isActive !== undefined) dbUpdates.isActive = updates.isActive;
+    if (updates.isActive !== undefined) dbUpdates.isActive = Boolean(updates.isActive);
+    
+    console.log('[API] dbUpdates:', dbUpdates);
     
     const sequence = await updateSequence(id, dbUpdates);
     
