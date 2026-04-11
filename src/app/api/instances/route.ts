@@ -3,28 +3,27 @@ import { evolutionApi } from '@/lib/evolution-api';
 
 export async function GET() {
   try {
+    console.log('[API] Fetching instances...');
     const response = await evolutionApi.getInstances();
+    console.log('[API] Raw response:', JSON.stringify(response));
     
-    const instances = await Promise.all(
-      response.map(async (item) => {
-        try {
-          const info = await evolutionApi.getInstanceInfo(item.instance.instanceName);
-          return {
-            id: item.instance.instanceName,
-            name: item.instance.instanceName,
-            status: evolutionApi.mapStatus(info.instance.state),
-            phoneNumber: item.instance.owner?.replace('@s.whatsapp.net', '') || '',
-          };
-        } catch {
-          return {
-            id: item.instance.instanceName,
-            name: item.instance.instanceName,
-            status: 'disconnected' as const,
-            phoneNumber: '',
-          };
-        }
-      })
-    );
+    if (!response || response.length === 0) {
+      console.log('[API] No instances returned');
+      return NextResponse.json([]);
+    }
+    
+    const instances = response.map((item: any) => {
+      const name = item.name || item.instanceName;
+      const phoneNumber = item.ownerJid?.replace('@s.whatsapp.net', '') || item.owner?.replace('@s.whatsapp.net', '') || '';
+      const status = evolutionApi.mapStatus(item.connectionStatus || item.status || 'close');
+      
+      return {
+        id: item.id || name,
+        name: name,
+        status,
+        phoneNumber,
+      };
+    });
 
     return NextResponse.json(instances);
   } catch (error) {
