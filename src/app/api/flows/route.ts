@@ -1,41 +1,47 @@
 import { NextResponse } from 'next/server';
-import { flowsStore, generateId } from '@/lib/flows-store';
+import { getFlows, createFlow } from '@/lib/database';
 
 export async function GET() {
-  const allFlows = Array.from(flowsStore.values());
-  return NextResponse.json(allFlows);
+  try {
+    const flows = await getFlows();
+    return NextResponse.json(flows.map((f: any) => ({
+      ...f,
+      nodes: typeof f.nodes === 'string' ? JSON.parse(f.nodes) : f.nodes,
+      edges: typeof f.edges === 'string' ? JSON.parse(f.edges) : f.edges,
+    })));
+  } catch (error) {
+    console.error('[API] Error fetching flows:', error);
+    return NextResponse.json({ error: 'Failed to fetch flows' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
   try {
-    const { name, description, instanceId, nodes, edges } = await request.json();
+    const body = await request.json();
+    const { name, description, instanceName, nodes, edges } = body;
     
-    if (!name || !instanceId) {
+    if (!name || !instanceName) {
       return NextResponse.json(
-        { error: 'name e instanceId são obrigatórios' },
+        { error: 'name e instanceName são obrigatórios' },
         { status: 400 }
       );
     }
     
-    const flow = {
-      id: generateId(),
+    const flow = await createFlow({
       name,
       description: description || '',
-      instanceId,
+      instanceName,
       nodes: nodes || [],
       edges: edges || [],
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    });
     
-    flowsStore.set(flow.id, flow);
-    
-    return NextResponse.json(flow);
+    return NextResponse.json({
+      ...flow,
+      nodes: typeof flow.nodes === 'string' ? JSON.parse(flow.nodes) : flow.nodes,
+      edges: typeof flow.edges === 'string' ? JSON.parse(flow.edges) : flow.edges,
+    });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao criar fluxo' },
-      { status: 500 }
-    );
+    console.error('[API] Error creating flow:', error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro ao criar fluxo' }, { status: 500 });
   }
 }

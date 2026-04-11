@@ -70,32 +70,23 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .btn-primary {
-    background: var(--color-primary);
-    color: white;
-  }
-  
-  .btn-primary:hover {
-    background: var(--color-secondary);
-  }
-  
-  .btn-accent {
     background: var(--color-accent);
     color: var(--color-primary);
   }
   
-  .btn-accent:hover {
+  .btn-primary:hover {
     background: #00c4e6;
   }
   
-  .btn-outline {
-    background: transparent;
-    border-color: var(--color-border);
+  .btn-secondary {
+    background: var(--color-surface);
     color: var(--color-text);
+    border-color: var(--color-border);
   }
   
-  .btn-outline:hover {
-    border-color: var(--color-text);
-    background: var(--color-bg);
+  .btn-secondary:hover {
+    background: var(--color-primary);
+    color: white;
   }
   
   .btn-ghost {
@@ -172,8 +163,8 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .badge-default {
-    background: var(--color-primary);
-    color: white;
+    background: var(--color-accent);
+    color: var(--color-primary);
   }
   
   .badge-outline {

@@ -28,10 +28,10 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-56 bg-[#0F0F0F] border-r border-[#1A1A1A] p-4 flex flex-col">
+    <aside className="fixed left-0 top-0 h-screen w-56 bg-white border-r border-gray-200 p-4 flex flex-col">
       <div className="mb-8 px-2">
         <h1 className="text-xl font-bold font-mono text-[#00D9FF]">FANZAP</h1>
-        <p className="text-xs text-[#6B7280]">WhatsApp Automation</p>
+        <p className="text-xs text-gray-500">WhatsApp Automation</p>
       </div>
       
       <nav className="flex-1 space-y-1">
@@ -44,7 +44,7 @@ export function Sidebar() {
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 isActive 
                   ? 'bg-[#00D9FF]/10 text-[#00D9FF]' 
-                  : 'text-[#6B7280] hover:bg-white/5 hover:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
               <item.icon className="w-5 h-5" />
@@ -54,8 +54,8 @@ export function Sidebar() {
         })}
       </nav>
       
-      <div className="pt-4 border-t border-[#1A1A1A]">
-        <p className="text-xs text-[#6B7280] px-2">v1.0.0</p>
+      <div className="pt-4 border-t border-gray-200">
+        <p className="text-xs text-gray-400 px-2">v1.0.0</p>
       </div>
     </aside>
   );

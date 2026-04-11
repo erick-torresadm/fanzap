@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { evolutionApi } from '@/lib/evolution-api';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ name: string }> }
@@ -30,6 +32,41 @@ export async function GET(
     console.error('[API] Error getting instance:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro ao buscar instância' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ name: string }> }
+) {
+  try {
+    const { name } = await params;
+    const body = await request.json();
+    
+    if (body.action === 'setWebhook') {
+      const webhookUrl = body.webhookUrl;
+      
+      if (!webhookUrl) {
+        return NextResponse.json(
+          { error: 'webhookUrl é obrigatório' },
+          { status: 400 }
+        );
+      }
+      
+      await evolutionApi.setWebhook(name, webhookUrl);
+      return NextResponse.json({ success: true, message: 'Webhook configurado com sucesso' });
+    }
+    
+    return NextResponse.json(
+      { error: 'Ação desconhecida' },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error('[API] Error updating instance:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro ao atualizar instância' },
       { status: 500 }
     );
   }

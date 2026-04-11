@@ -1,5 +1,7 @@
--- Fanzap Database Schema for Neon Postgres
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/database';
 
+const SCHEMA = `
 -- Flows (automation flows)
 CREATE TABLE IF NOT EXISTS flows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,3 +59,29 @@ CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_flows_instance ON flows(instance_name);
 CREATE INDEX IF NOT EXISTS idx_sequences_instance ON sequences(instance_name);
 CREATE INDEX IF NOT EXISTS idx_triggers_instance ON triggers(instance_name);
+`;
+
+export async function POST() {
+  try {
+    await sql(SCHEMA);
+    return NextResponse.json({ success: true, message: 'Database schema initialized' });
+  } catch (error) {
+    console.error('[API] Schema init error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to initialize schema' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const tables = await sql`
+      SELECT table_name FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `;
+    return NextResponse.json({ tables: tables.map((t: any) => t.table_name) });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch tables' }, { status: 500 });
+  }
+}

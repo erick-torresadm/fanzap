@@ -135,6 +135,32 @@ export default function InstancesPage() {
     }
   };
 
+  const handleSetWebhook = async (name: string) => {
+    if (!confirm('Configurar webhook automaticamente para esta instância?')) return;
+    
+    const webhookUrl = `${window.location.origin}/api/webhook`;
+    
+    try {
+      setConnecting(name);
+      const res = await fetch(`/api/instances/${name}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'setWebhook', webhookUrl })
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erro ao configurar webhook');
+      }
+      
+      alert('Webhook configurado com sucesso!');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro');
+    } finally {
+      setConnecting(null);
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
@@ -273,6 +299,21 @@ export default function InstancesPage() {
                 </div>
                 
                 <div className="flex gap-2">
+                  {inst.status === 'connected' && (
+                    <button 
+                      onClick={() => handleSetWebhook(inst.name)}
+                      disabled={connecting === inst.name}
+                      className="btn btn-sm btn-secondary"
+                      title="Configurar webhook"
+                    >
+                      {connecting === inst.name ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Wifi className="w-4 h-4" />
+                      )}
+                      Webhook
+                    </button>
+                  )}
                   {inst.status !== 'connected' && (
                     <button 
                       onClick={() => handleConnect(inst.name)}

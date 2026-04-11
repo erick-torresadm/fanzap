@@ -264,6 +264,54 @@ export class EvolutionAPI {
     };
     return statusMap[evolutionStatus] || 'disconnected';
   }
+
+  async setWebhook(instanceName: string, webhookUrl: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/webhook/set/${instanceName}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        webhook: {
+          url: webhookUrl,
+          enabled: true,
+          webhookByEvents: false,
+          webhookBase64: false,
+          events: [
+            'APPLICATION_STARTUP',
+            'INSTANCE_START',
+            'INSTANCE_STATUS',
+            'CONNECTED',
+            'DISCONNECTED',
+            'MESSAGES_UPSERT',
+            'MESSAGES_UPDATE',
+            'MESSAGES_DELETE',
+            'SEND_MESSAGE',
+            'CONTACTS_SET',
+            'CONTACTS_UPDATE',
+            'PRESENCE_UPDATE',
+          ],
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to set webhook' }));
+      throw new Error(error.message || 'Failed to set webhook');
+    }
+  }
+
+  async getWebhook(instanceName: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/webhook/find/${instanceName}`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to get webhook' }));
+      throw new Error(error.message || 'Failed to get webhook');
+    }
+
+    return response.json();
+  }
 }
 
 export const evolutionApi = new EvolutionAPI();
