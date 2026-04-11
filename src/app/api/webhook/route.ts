@@ -68,8 +68,10 @@ export async function POST(request: NextRequest) {
     
     console.log('[WEBHOOK] Raw body:', JSON.stringify(body));
     
-    const instanceName = body.instance || body.instanceName || body.instanceData?.instanceName;
+    // Extrair instanceName de diferentes formatos possíveis
+    const instanceName = body.instance || body.instanceName || body.instanceData?.instanceName || body.instanceData?.name;
     console.log('[WEBHOOK] Instance:', instanceName);
+    console.log('[WEBHOOK] Full body keys:', Object.keys(body));
     
     if (body.event === 'instance.instanceUp') {
       console.log('[WEBHOOK] Instance connected:', instanceName);
