@@ -277,11 +277,11 @@ export default function InstancesPage() {
                 <div className="flex gap-2">
                   {inst.status !== 'connected' && (
                     <button 
-                      onClick={() => handleConnect(inst.id)}
-                      disabled={connecting === inst.id}
+                      onClick={() => handleConnect(inst.name)}
+                      disabled={connecting === inst.name}
                       className="btn btn-sm btn-primary"
                     >
-                      {connecting === inst.id ? (
+                      {connecting === inst.name ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <QrCode className="w-4 h-4" />
