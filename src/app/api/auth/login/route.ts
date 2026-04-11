@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
+import crypto from 'crypto';
 
 function hashPassword(password: string): string {
-  const crypto = require('crypto');
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
   return `${salt}:${hash}`;
 }
 
 function verifyPassword(password: string, stored: string): boolean {
-  const crypto = require('crypto');
   const parts = stored.split(':');
   if (parts.length !== 2) return false;
   const salt = parts[0];
@@ -43,6 +42,7 @@ export async function POST(request: Request) {
     const user = result[0];
     
     const validPassword = verifyPassword(password, user.password);
+    console.log('Password verification:', validPassword, 'for user:', user.email);
     
     if (!validPassword) {
       return NextResponse.json(

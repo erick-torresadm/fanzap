@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEvolutionApi } from '@/lib/evolution-api-factory';
-import { sql, query, getActiveFlows, getActiveSequences, getActiveTriggers, saveMessage } from '@/lib/database';
+import { sql, getActiveFlows, getActiveSequences, getActiveTriggers, saveMessage } from '@/lib/database';
 
-async function getUserApiSettings(userId: string) {
-  const result = await sql`SELECT api_url, api_key FROM user_api_settings WHERE user_id = ${userId}`;
-  return result[0] || null;
-}
+const DEFAULT_API_URL = 'https://api.membropro.com.br';
+const DEFAULT_API_KEY = 'd6996979cd25b0ebe76ab2fbe509538e';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -42,13 +40,22 @@ async function executeFlow(flow: any, instanceName: string, from: string, apiUrl
 
 async function executeSequence(sequence: any, instanceName: string, from: string, apiUrl: string, apiKey: string) {
   console.log(`[SEQUENCE] Executando sequência "${sequence.name}" para ${from}`);
+  console.log(`[SEQUENCE] Messages:`, JSON.stringify(sequence.messages));
   
   const evolutionApi = getEvolutionApi(apiUrl, apiKey);
   const messages = typeof sequence.messages === 'string' ? JSON.parse(sequence.messages) : sequence.messages;
   
+  if (!Array.isArray(messages) || messages.length === 0) {
+    console.log('[SEQUENCE] Nenhuma mensagem na sequência!');
+    return;
+  }
+  
   for (const msg of messages) {
+    console.log('[SEQUENCE] Processando mensagem:', msg);
+    
     if (msg.content) {
       try {
+        console.log(`[SEQUENCE] Enviando para ${from}: ${msg.content}`);
         await evolutionApi.sendMessage(instanceName, from, msg.content);
         await saveMessage({
           instanceName,
@@ -56,7 +63,7 @@ async function executeSequence(sequence: any, instanceName: string, from: string
           content: msg.content,
           toNumber: from
         });
-        console.log(`[SEQUENCE] Mensagem enviada: ${msg.content.substring(0, 50)}...`);
+        console.log(`[SEQUENCE] Mensagem enviada com sucesso`);
       } catch (e) {
         console.error(`[SEQUENCE] Erro ao enviar mensagem:`, e);
       }
@@ -69,14 +76,39 @@ async function executeSequence(sequence: any, instanceName: string, from: string
   }
 }
 
+function extractInstanceName(body: any): string {
+  // Tentar várias formas de encontrar o nome da instância
+  const possibleKeys = [
+    body.instance,
+    body.instanceName,
+    body.instanceData?.instanceName,
+    body.instanceData?.name,
+    body.metadata?.instanceName,
+    body.instanceData?.instance?.name,
+  ];
+  
+  for (const key of possibleKeys) {
+    if (key) return key;
+  }
+  
+  // Se não encontrou, retornar valor padrão
+  return 'rickteste';
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    console.log('[WEBHOOK] Raw body:', JSON.stringify(body));
+    console.log('[WEBHOOK] Full body keys:', Object.keys(body));
+    console.log('[WEBHOOK] Body:', JSON.stringify(body).substring(0, 500));
     
-    const instanceName = body.instance || body.instanceName || body.instanceData?.instanceName || body.instanceData?.name;
-    console.log('[WEBHOOK] Instance:', instanceName);
+    const instanceName = extractInstanceName(body);
+    console.log('[WEBHOOK] Instance extraído:', instanceName);
+    console.log('[WEBHOOK] Event:', body.event);
+    
+    // Log de todos os eventos para debug
+    console.log('[WEBHOOK] Event type:', body.event);
+    console.log('[WEBHOOK] Data keys:', body.data ? Object.keys(body.data) : 'no data');
     
     if (body.event === 'instance.instanceUp') {
       console.log('[WEBHOOK] Instance connected:', instanceName);
@@ -94,34 +126,42 @@ export async function POST(request: NextRequest) {
       
       console.log(`[WEBHOOK] ${messages.length} mensagem(s) recebida(s)`);
       
-      const defaultApiUrl = process.env.EVOLUTION_API_URL || 'https://api.membropro.com.br';
-      const defaultApiKey = process.env.EVOLUTION_API_KEY || 'd6996979cd25b0ebe76ab2fbe509538e';
-      let apiUrl = defaultApiUrl;
-      let apiKey = defaultApiKey;
+      const apiUrl = DEFAULT_API_URL;
+      const apiKey = DEFAULT_API_KEY;
       
-      // Buscar config do usuário baseado na instância
       const triggers = await getActiveTriggers();
       const sequences = await getActiveSequences();
+      
+      console.log('[WEBHOOK] Triggers carregados:', triggers.length);
+      console.log('[WEBHOOK] Sequências carregadas:', sequences.length);
       
       for (const msg of messages) {
         const from = msg.key?.remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', '');
         const messageText = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
         
-        if (!from) continue;
+        if (!from) {
+          console.log('[WEBHOOK] Sem from, continuando...');
+          continue;
+        }
         
         const isFromMe = msg.key?.fromMe === true;
         
-        console.log(`[WEBHOOK] Mensagem de ${from}: "${messageText}" (fromMe: ${isFromMe})`);
+        console.log(`[WEBHOOK] Msg: "${messageText}" from: ${from} fromMe: ${isFromMe}`);
         
-        if (!isFromMe && messageText) {
-          await saveMessage({
-            instanceName,
-            direction: 'incoming',
-            content: messageText,
-            fromNumber: from,
-            messageId: msg.key?.id
-          });
-          console.log('[WEBHOOK] Mensagem salva no banco');
+        // Salvar mensagem recebida
+        if (!isFromMe && messageText && instanceName) {
+          try {
+            await saveMessage({
+              instanceName,
+              direction: 'incoming',
+              content: messageText,
+              fromNumber: from,
+              messageId: msg.key?.id
+            });
+            console.log('[WEBHOOK] Mensagem salva no banco');
+          } catch (e) {
+            console.error('[WEBHOOK] Erro ao salvar mensagem:', e);
+          }
         }
         
         if (isFromMe) {
@@ -130,94 +170,55 @@ export async function POST(request: NextRequest) {
         }
         
         if (!messageText) {
-          console.log('[WEBHOOK] Mensagem vazia, ignorando');
+          console.log('[WEBHOOK] Mensagem vazia, continuando...');
           continue;
         }
         
-        let triggered = false;
-        
-        console.log('[WEBHOOK] Verificando triggers...');
-        console.log('[WEBHOOK] Triggers encontrados:', triggers.length);
+        // Verificar triggers
+        console.log('[WEBHOOK] Verificando triggers para:', messageText);
         
         for (const trigger of triggers) {
-          const triggerInstance = trigger.instance_name;
-          if (triggerInstance && triggerInstance !== instanceName) continue;
+          const triggerInstance = trigger.instance_name || '';
+          
+          // Se trigger tem instância específica, verificar se bate
+          if (triggerInstance && triggerInstance !== instanceName) {
+            console.log(`[WEBHOOK] Trigger pulado (instância não bate): ${triggerInstance} vs ${instanceName}`);
+            continue;
+          }
           
           const keyword = (trigger.keyword || '').toLowerCase().trim();
           const messageLower = messageText.toLowerCase().trim();
           
+          console.log(`[WEBHOOK] Verificando trigger: keyword="${keyword}" vs msg="${messageLower}"`);
+          
           let shouldTrigger = false;
           if (keyword && messageLower.includes(keyword)) {
             shouldTrigger = true;
-            console.log(`[WEBHOOK] Trigger ativado! Keyword: "${keyword}" para "${messageLower}"`);
-          } else if (!keyword) {
-            shouldTrigger = true;
+            console.log(`[WEBHOOK] ✅ Trigger ativado!`);
           }
           
           if (shouldTrigger) {
-            triggered = true;
-            if (trigger.target_type === 'flow' && trigger.target_id) {
+            console.log(`[WEBHOOK] Executando trigger: ${trigger.name}, target: ${trigger.target_type}`);
+            
+            if (trigger.target_type === 'sequence' && trigger.target_id) {
+              const sequence = sequences.find((s: any) => s.id === trigger.target_id);
+              if (sequence) {
+                console.log(`[WEBHOOK] Executando sequência: ${sequence.name}`);
+                await executeSequence(sequence, instanceName, from, apiUrl, apiKey);
+                return NextResponse.json({ success: true, triggered: true });
+              } else {
+                console.log(`[WEBHOOK] Sequência não encontrada: ${trigger.target_id}`);
+              }
+            } else if (trigger.target_type === 'flow' && trigger.target_id) {
               const flows = await getActiveFlows();
               const flow = flows.find((f: any) => f.id === trigger.target_id);
               if (flow) {
-                console.log(`[WEBHOOK] Executando fluxo via trigger: ${flow.name}`);
+                console.log(`[WEBHOOK] Executando fluxo: ${flow.name}`);
                 await executeFlow(flow, instanceName, from, apiUrl, apiKey);
-              }
-            } else if (trigger.target_type === 'sequence' && trigger.target_id) {
-              const sequence = sequences.find((s: any) => s.id === trigger.target_id);
-              if (sequence) {
-                console.log(`[WEBHOOK] Executando sequência via trigger: ${sequence.name}`);
-                await executeSequence(sequence, instanceName, from, apiUrl, apiKey);
+                return NextResponse.json({ success: true, triggered: true });
               }
             }
           }
-        }
-        
-        if (triggered) {
-          console.log('[WEBHOOK] Trigger executado');
-          return NextResponse.json({ success: true, triggered: true });
-        }
-        
-        const flows = await getActiveFlows();
-        for (const flow of flows) {
-          const flowInstance = flow.instance_name;
-          if (flowInstance && flowInstance !== instanceName) continue;
-          
-          const nodes = typeof flow.nodes === 'string' ? JSON.parse(flow.nodes) : flow.nodes;
-          const triggerNode = nodes?.find((n: any) => n.type === 'trigger');
-          
-          if (!triggerNode) {
-            console.log(`[WEBHOOK] Executando fluxo "${flow.name}" (sem trigger)`);
-            await executeFlow(flow, instanceName, from, apiUrl, apiKey);
-            continue;
-          }
-          
-          const nodeData = triggerNode.data as any;
-          const condition = nodeData?.condition || 'any';
-          let shouldExecute = false;
-          
-          if (!condition || condition === 'any') {
-            shouldExecute = true;
-          } else if (condition.startsWith('contains:')) {
-            const matchText = condition.replace('contains:', '');
-            shouldExecute = messageText.toLowerCase().includes(matchText.toLowerCase());
-          } else if (condition.startsWith('equals:')) {
-            const matchText = condition.replace('equals:', '');
-            shouldExecute = messageText.toLowerCase() === matchText.toLowerCase();
-          }
-          
-          if (shouldExecute) {
-            console.log(`[WEBHOOK] Condição aceita, executando fluxo "${flow.name}"`);
-            await executeFlow(flow, instanceName, from, apiUrl, apiKey);
-          }
-        }
-        
-        for (const sequence of sequences) {
-          const seqInstance = sequence.instance_name;
-          if (seqInstance && seqInstance !== instanceName) continue;
-          
-          console.log(`[WEBHOOK] Executando sequência "${sequence.name}"`);
-          await executeSequence(sequence, instanceName, from, apiUrl, apiKey);
         }
       }
     }
@@ -230,25 +231,19 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  let flowsCount = 0;
-  let sequencesCount = 0;
-  let triggersCount = 0;
-  
   try {
     const flows = await getActiveFlows();
     const sequences = await getActiveSequences();
     const triggers = await getActiveTriggers();
-    flowsCount = flows.length;
-    sequencesCount = sequences.length;
-    triggersCount = triggers.length;
+    
+    return NextResponse.json({ 
+      message: 'Webhook endpoint',
+      flowsCount: flows.length,
+      sequencesCount: sequences.length,
+      triggersCount: triggers.length
+    });
   } catch (e) {
-    console.error('[WEBHOOK] DB error:', e);
+    console.error('[WEBHOOK] Error:', e);
+    return NextResponse.json({ error: 'Error' }, { status: 500 });
   }
-  
-  return NextResponse.json({ 
-    message: 'Webhook endpoint for Evolution API',
-    flowsCount,
-    sequencesCount,
-    triggersCount
-  });
 }
