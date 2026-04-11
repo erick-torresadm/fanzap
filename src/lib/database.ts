@@ -5,7 +5,7 @@ const sql: any = neon(databaseUrl);
 
 export { sql };
 
-function query(sqlText: string, params: any[] = []) {
+export function query(sqlText: string, params: any[] = []) {
   return sql.query(sqlText, params);
 }
 

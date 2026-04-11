@@ -1,19 +1,33 @@
 import { NextResponse } from 'next/server';
-import { evolutionApi } from '@/lib/evolution-api';
+import { getEvolutionApi } from '@/lib/evolution-api-factory';
+import { sql } from '@/lib/database';
 
-export const dynamic = 'force-dynamic';
+async function getUserApiSettings(userId: string) {
+  const result = await sql`SELECT api_url, api_key FROM user_api_settings WHERE user_id = ${userId}`;
+  return result[0] || null;
+}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
+    const userId = request.headers.get('x-user-id');
     const { name } = await params;
-    console.log('[API] GET instance:', name);
     
+    let apiUrl = process.env.EVOLUTION_API_URL || 'https://api.membropro.com.br';
+    let apiKey = process.env.EVOLUTION_API_KEY || 'd6996979cd25b0ebe76ab2fbe509538e';
+    
+    if (userId) {
+      const userSettings = await getUserApiSettings(userId);
+      if (userSettings?.api_url) {
+        apiUrl = userSettings.api_url;
+        apiKey = userSettings.api_key;
+      }
+    }
+    
+    const evolutionApi = getEvolutionApi(apiUrl, apiKey);
     const instances = await evolutionApi.getInstances();
-    console.log('[API] All instances:', instances.length);
-    
     const found = instances.find((i: any) => i.name === name || i.id === name);
     
     if (!found) {
@@ -45,10 +59,22 @@ export async function PUT(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
+    const userId = request.headers.get('x-user-id');
     const { name } = await params;
     const body = await request.json();
     
-    console.log('[API] PUT instance:', name, body.action);
+    let apiUrl = process.env.EVOLUTION_API_URL || 'https://api.membropro.com.br';
+    let apiKey = process.env.EVOLUTION_API_KEY || 'd6996979cd25b0ebe76ab2fbe509538e';
+    
+    if (userId) {
+      const userSettings = await getUserApiSettings(userId);
+      if (userSettings?.api_url) {
+        apiUrl = userSettings.api_url;
+        apiKey = userSettings.api_key;
+      }
+    }
+    
+    const evolutionApi = getEvolutionApi(apiUrl, apiKey);
     
     if (body.action === 'setWebhook') {
       const webhookUrl = body.webhookUrl;
@@ -60,22 +86,17 @@ export async function PUT(
         );
       }
       
-      // Verificar se a instância existe
       const instances = await evolutionApi.getInstances();
       const found = instances.find((i: any) => i.name === name || i.id === name);
       
       if (!found) {
-        console.log('[API] Instance not found:', name);
         return NextResponse.json(
-          { error: `Instância "${name}" não encontrada. Recarregue a página.` },
+          { error: `Instância "${name}" não encontrada` },
           { status: 404 }
         );
       }
       
-      console.log('[API] Setting webhook for', name, 'to', webhookUrl);
-      
       await evolutionApi.setWebhook(name, webhookUrl);
-      console.log('[API] Webhook set successfully');
       return NextResponse.json({ success: true, message: 'Webhook configurado com sucesso' });
     }
     
@@ -97,11 +118,38 @@ export async function DELETE(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
+    const userId = request.headers.get('x-user-id');
     const { name } = await params;
+    
+    let apiUrl = process.env.EVOLUTION_API_URL || 'https://api.membropro.com.br';
+    let apiKey = process.env.EVOLUTION_API_KEY || 'd6996979cd25b0ebe76ab2fbe509538e';
+    
+    if (userId) {
+      const userSettings = await getUserApiSettings(userId);
+      if (userSettings?.api_url) {
+        apiUrl = userSettings.api_url;
+        apiKey = userSettings.api_key;
+      }
+    }
+    
+    const evolutionApi = getEvolutionApi(apiUrl, apiKey);
     await evolutionApi.deleteInstance(name);
     return NextResponse.json({ success: true });
   } catch (error) {
     try {
+      const userId = request.headers.get('x-user-id');
+      let apiUrl = process.env.EVOLUTION_API_URL || 'https://api.membropro.com.br';
+      let apiKey = process.env.EVOLUTION_API_KEY || 'd6996979cd25b0ebe76ab2fbe509538e';
+      
+      if (userId) {
+        const userSettings = await getUserApiSettings(userId);
+        if (userSettings?.api_url) {
+          apiUrl = userSettings.api_url;
+          apiKey = userSettings.api_key;
+        }
+      }
+      
+      const evolutionApi = getEvolutionApi(apiUrl, apiKey);
       const instances = await evolutionApi.getInstances();
       const found = instances.find((i: any) => i.name === name || i.id === name);
       if (found) {

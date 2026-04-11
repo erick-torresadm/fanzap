@@ -1,9 +1,30 @@
 import { NextResponse } from 'next/server';
-import { evolutionApi } from '@/lib/evolution-api';
+import { getEvolutionApi } from '@/lib/evolution-api-factory';
+import { sql } from '@/lib/database';
 
-export async function GET() {
+async function getUserApiSettings(userId: string) {
+  const result = await sql`SELECT api_url, api_key FROM user_api_settings WHERE user_id = ${userId}`;
+  return result[0] || null;
+}
+
+export async function GET(request: Request) {
   try {
-    console.log('[API] Fetching instances...');
+    const userId = request.headers.get('x-user-id');
+    
+    let apiUrl = process.env.EVOLUTION_API_URL || 'https://api.membropro.com.br';
+    let apiKey = process.env.EVOLUTION_API_KEY || 'd6996979cd25b0ebe76ab2fbe509538e';
+    
+    if (userId) {
+      const userSettings = await getUserApiSettings(userId);
+      if (userSettings?.api_url) {
+        apiUrl = userSettings.api_url;
+        apiKey = userSettings.api_key;
+      }
+    }
+    
+    const evolutionApi = getEvolutionApi(apiUrl, apiKey);
+    console.log('[API] Fetching instances with API:', apiUrl);
+    
     const response = await evolutionApi.getInstances();
     console.log('[API] Raw response:', JSON.stringify(response));
     
@@ -37,6 +58,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const userId = request.headers.get('x-user-id');
     const { name } = await request.json();
 
     if (!name) {
@@ -46,6 +68,18 @@ export async function POST(request: Request) {
       );
     }
 
+    let apiUrl = process.env.EVOLUTION_API_URL || 'https://api.membropro.com.br';
+    let apiKey = process.env.EVOLUTION_API_KEY || 'd6996979cd25b0ebe76ab2fbe509538e';
+    
+    if (userId) {
+      const userSettings = await getUserApiSettings(userId);
+      if (userSettings?.api_url) {
+        apiUrl = userSettings.api_url;
+        apiKey = userSettings.api_key;
+      }
+    }
+    
+    const evolutionApi = getEvolutionApi(apiUrl, apiKey);
     const result = await evolutionApi.createInstance(name);
     
     return NextResponse.json({

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -10,7 +10,9 @@ import {
   Zap, 
   Settings,
   Users,
-  Send
+  Send,
+  LogOut,
+  User
 } from 'lucide-react';
 
 const navItems = [
@@ -20,12 +22,17 @@ const navItems = [
   { href: '/sequences', icon: Clock, label: 'Sequências' },
   { href: '/triggers', icon: Zap, label: 'Gatilhos' },
   { href: '/teste', icon: Send, label: 'Teste' },
-  { href: '/plans', icon: Users, label: 'Planos' },
   { href: '/settings', icon: Settings, label: 'Configurações' },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-56 bg-white border-r border-gray-200 p-4 flex flex-col">
@@ -54,8 +61,15 @@ export function Sidebar() {
         })}
       </nav>
       
-      <div className="pt-4 border-t border-gray-200">
-        <p className="text-xs text-gray-400 px-2">v1.0.0</p>
+      <div className="pt-4 border-t border-gray-200 mt-4">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 w-full px-2 py-2 rounded-lg hover:bg-red-50"
+        >
+          <LogOut className="w-4 h-4" />
+          Sair
+        </button>
+        <p className="text-xs text-gray-400 px-2 mt-2">v1.0.0</p>
       </div>
     </aside>
   );

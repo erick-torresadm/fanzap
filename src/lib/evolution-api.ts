@@ -42,9 +42,9 @@ export class EvolutionAPI {
   private baseUrl: string;
   private apiKey: string;
 
-  constructor() {
-    this.baseUrl = EVOLUTION_API_URL;
-    this.apiKey = EVOLUTION_API_KEY;
+  constructor(apiUrl?: string, apiKey?: string) {
+    this.baseUrl = apiUrl || EVOLUTION_API_URL;
+    this.apiKey = apiKey || EVOLUTION_API_KEY;
   }
 
   private getHeaders() {
