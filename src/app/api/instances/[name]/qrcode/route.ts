@@ -22,7 +22,7 @@ export async function GET(
     
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.message || `Evolution API error: ${response.status}` },
+        { error: data.message || `Evolution API error: ${response.status}`, qrCode: '', code: '', pairingCode: '' },
         { status: response.status }
       );
     }
@@ -34,11 +34,13 @@ export async function GET(
     if (data.pairingCode) {
       pairingCode = data.pairingCode;
       qrCode = data.code || '';
+      base64 = data.base64 || '';
     } else if (data.qrCode) {
-      qrCode = data.qrCode.code || data.qrCode || '';
-      base64 = data.qrCode.base64 || data.base64 || '';
-    } else if (data.code && data.code.startsWith('2@')) {
-      qrCode = data.code || '';
+      qrCode = data.qrCode?.code || data.qrCode || '';
+      base64 = data.qrCode?.base64 || data.base64 || '';
+    } else if (data.code) {
+      qrCode = data.code;
+      base64 = data.base64 || '';
     }
     
     return NextResponse.json({
@@ -49,7 +51,7 @@ export async function GET(
   } catch (error) {
     console.error('[QR Code] Error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to get QR code' },
+      { error: error instanceof Error ? error.message : 'Failed to get QR code', qrCode: '', code: '', pairingCode: '' },
       { status: 500 }
     );
   }

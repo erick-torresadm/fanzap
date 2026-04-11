@@ -1,7 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Send, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Send, Loader2, CheckCircle, XCircle, LayoutDashboard, MessageSquare, GitBranch, Clock, Zap, Menu } from 'lucide-react';
+import Link from 'next/link';
+
+const navItems = [
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/instances', icon: MessageSquare, label: 'Instâncias' },
+  { href: '/flows', icon: GitBranch, label: 'Fluxos' },
+  { href: '/sequences', icon: Clock, label: 'Sequências' },
+  { href: '/triggers', icon: Zap, label: 'Gatilhos' },
+];
 
 interface Instance {
   id: string;
@@ -16,6 +25,7 @@ export default function TestPage() {
   const [message, setMessage] = useState('Olá! Esta é uma mensagem de teste do Fanzap 🚀');
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ success?: boolean; error?: string } | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/instances')
@@ -62,7 +72,23 @@ export default function TestPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] p-8">
+    <div className="min-h-screen bg-[#0A0A0A] p-8 relative">
+      <div className="fixed top-4 right-4 z-50">
+        <button onClick={() => setMenuOpen(!menuOpen)} className="w-10 h-10 bg-[#0F0F0F] rounded-lg flex items-center justify-center">
+          <Menu className="w-5 h-5 text-white" />
+        </button>
+        {menuOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-[#0F0F0F] rounded-lg shadow-lg py-2">
+            {navItems.map((item) => (
+              <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-white hover:bg-white/10">
+                <item.icon className="w-4 h-4" />
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+      
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold font-mono mb-2">Teste de Mensagens</h1>
         <p className="text-[#6B7280] mb-8">Enviar mensagem de teste</p>
