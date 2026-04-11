@@ -9,8 +9,11 @@ export async function GET(
 ) {
   try {
     const { name } = await params;
+    console.log('[API] GET instance:', name);
     
     const instances = await evolutionApi.getInstances();
+    console.log('[API] All instances:', instances.length);
+    
     const found = instances.find((i: any) => i.name === name || i.id === name);
     
     if (!found) {
@@ -45,6 +48,8 @@ export async function PUT(
     const { name } = await params;
     const body = await request.json();
     
+    console.log('[API] PUT instance:', name, body.action);
+    
     if (body.action === 'setWebhook') {
       const webhookUrl = body.webhookUrl;
       
@@ -55,7 +60,10 @@ export async function PUT(
         );
       }
       
+      console.log('[API] Setting webhook for', name, 'to', webhookUrl);
+      
       await evolutionApi.setWebhook(name, webhookUrl);
+      console.log('[API] Webhook set successfully');
       return NextResponse.json({ success: true, message: 'Webhook configurado com sucesso' });
     }
     
