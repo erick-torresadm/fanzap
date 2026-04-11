@@ -158,6 +158,106 @@ export class EvolutionAPI {
     }
   }
 
+  async sendMedia(instanceName: string, number: string, media: {
+    mediaUrl?: string;
+    mediaBase64?: string;
+    caption?: string;
+    fileName?: string;
+    fileExtension?: string;
+  }): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/message/sendMedia/${instanceName}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        number: number.replace('@s.whatsapp.net', '').replace(/\D/g, ''),
+        mediaUrl: media.mediaUrl,
+        mediaBase64: media.mediaBase64,
+        caption: media.caption,
+        fileName: media.fileName,
+        fileExtension: media.fileExtension,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to send media' }));
+      throw new Error(error.message || 'Failed to send media');
+    }
+  }
+
+  async sendLocation(instanceName: string, number: string, location: {
+    latitude: number;
+    longitude: number;
+    title?: string;
+  }): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/message/sendLocation/${instanceName}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        number: number.replace('@s.whatsapp.net', '').replace(/\D/g, ''),
+        latitude: location.latitude,
+        longitude: location.longitude,
+        title: location.title,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to send location' }));
+      throw new Error(error.message || 'Failed to send location');
+    }
+  }
+
+  async sendButton(instanceName: string, number: string, button: {
+    title: string;
+    footer?: string;
+    items: { id: string; title: string }[];
+  }): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/message/sendList/${instanceName}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        number: number.replace('@s.whatsapp.net', '').replace(/\D/g, ''),
+        title: button.title,
+        footer: button.footer,
+        buttonText: 'Selecionar',
+        sections: [
+          {
+            title: 'Opções',
+            rows: button.items,
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to send buttons' }));
+      throw new Error(error.message || 'Failed to send buttons');
+    }
+  }
+
+  async sendButtons(instanceName: string, number: string, buttons: {
+    title: string;
+    body: string;
+    footer?: string;
+    buttons: { id: string; title: string }[];
+  }): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/message/sendButtons/${instanceName}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        number: number.replace('@s.whatsapp.net', '').replace(/\D/g, ''),
+        title: buttons.title,
+        bodyText: buttons.body,
+        footer: buttons.footer,
+        buttons: buttons.buttons.map((b) => ({ ...b, type: 'reply' })),
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to send buttons' }));
+      throw new Error(error.message || 'Failed to send buttons');
+    }
+  }
+
   mapStatus(evolutionStatus: string): 'connected' | 'disconnected' | 'connecting' {
     const statusMap: Record<string, 'connected' | 'disconnected' | 'connecting'> = {
       'open': 'connected',
