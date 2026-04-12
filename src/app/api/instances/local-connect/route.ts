@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const LOCAL_SERVER = process.env.LOCAL_WHATSAPP_URL || 'http://localhost:3001';
+const LOCAL_SERVER = 'https://definitely-lookup-honolulu-model.trycloudflare.com';
 
 export async function POST(request: Request) {
   const { instanceId } = await request.json();
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json(data);
   } catch {
     return NextResponse.json({ 
-      error: 'Servidor local offline. Execute: node whatsapp-server.js',
+      error: 'Servidor local offline',
       serverRequired: true 
     }, { status: 503 });
   }

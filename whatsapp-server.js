@@ -122,6 +122,10 @@ app.post('/send/:instanceId', async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', clients: clients.size, message: 'WhatsApp Server running' });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', clients: clients.size });
 });

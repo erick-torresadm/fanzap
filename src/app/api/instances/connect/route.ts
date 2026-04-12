@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
 
-const LOCAL_SERVER = process.env.LOCAL_WHATSAPP_URL || 'http://localhost:3001';
+const LOCAL_SERVER = 'https://definitely-lookup-honolulu-model.trycloudflare.com';
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -25,7 +25,6 @@ export async function POST(request: Request) {
       return NextResponse.json(data, { status: res.status });
     }
 
-    // Salvar instância no banco
     await sql`
       INSERT INTO user_instances (user_id, instance_name, created_at)
       VALUES (${userId}, ${instanceName}, NOW())
@@ -41,7 +40,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     return NextResponse.json({
-      error: 'Servidor local offline. Execute: node whatsapp-server.js',
+      error: 'Servidor local offline',
       serverRequired: true
     }, { status: 503 });
   }
