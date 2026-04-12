@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const LOCAL_SERVER = 'https://definitely-lookup-honolulu-model.trycloudflare.com';
+const LOCAL_SERVER = 'https://experiencing-int-approximate-plenty.trycloudflare.com';
 
 export async function POST(request: Request) {
   const { instanceId, to, message } = await request.json();
