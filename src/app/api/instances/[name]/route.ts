@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
 
-const LOCAL_SERVER = 'https://post-ellen-pulse-diversity.trycloudflare.com';
+const LOCAL_SERVER = 'https://separation-pit-stolen-libs.trycloudflare.com';
 
 export async function GET(request: Request, { params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
