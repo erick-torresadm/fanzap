@@ -347,20 +347,7 @@ export default function InstancesPage() {
                       Webhook
                     </button>
                   )}
-                  {inst.status !== 'connected' && (
-                    <button 
-                      onClick={() => handleConnect(inst.name)}
-                      disabled={connecting === inst.name}
-                      className="btn btn-sm btn-primary"
-                    >
-                      {connecting === inst.name ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <QrCode className="w-4 h-4" />
-                      )}
-                      Conectar
-                    </button>
-                  )}
+                  
                   <button 
                     onClick={() => handleDelete(inst.name)}
                     className="btn btn-sm btn-ghost text-[#FF3D00]"
