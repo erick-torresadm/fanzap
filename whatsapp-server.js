@@ -125,11 +125,19 @@ app.post('/send/:instanceId', async (req, res) => {
   try {
     const client = getClient(instanceId);
     
-    const chatId = await client.getNumberId(to);
+    let chatId = await client.getNumberId(to);
+    
     if (!chatId) {
-      return res.status(400).json({ error: 'Número não encontrado no WhatsApp' });
+      const numberWithCountry = '55' + to.replace(/^55/, '');
+      chatId = await client.getNumberId(numberWithCountry);
     }
     
+    if (!chatId) {
+      console.log('[SEND] Número não encontrado:', to);
+      return res.status(400).json({ error: 'Número não encontrado no WhatsApp', number: to });
+    }
+    
+    console.log('[SEND] Enviando para:', chatId._serialized, 'mensagem:', message);
     await client.sendMessage(chatId._serialized, message);
     res.json({ status: 'sent' });
   } catch (e) {
