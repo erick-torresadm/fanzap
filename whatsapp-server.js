@@ -108,7 +108,13 @@ app.get('/status/:instanceId', (req, res) => {
   const client = clients.get(instanceId);
   
   if (!client) return res.json({ status: 'not_created' });
-  if (client.pupPage) return res.json({ status: 'connected' });
+  if (client.pupPage) {
+    const info = client.info;
+    return res.json({ 
+      status: 'connected',
+      phoneNumber: info?.wid?.user || null
+    });
+  }
   return res.json({ status: 'connecting' });
 });
 
@@ -118,9 +124,16 @@ app.post('/send/:instanceId', async (req, res) => {
   
   try {
     const client = getClient(instanceId);
-    await client.sendMessage(to + '@c.us', message);
+    
+    const chatId = await client.getNumberId(to);
+    if (!chatId) {
+      return res.status(400).json({ error: 'Número não encontrado no WhatsApp' });
+    }
+    
+    await client.sendMessage(chatId._serialized, message);
     res.json({ status: 'sent' });
   } catch (e) {
+    console.error('[SEND ERROR]:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
