@@ -1,5 +1,6 @@
 const express = require('express');
 const { Client, LocalAuth } = require('./src/lib/whatsapp-web.js');
+const QRCode = require('qrcode');
 const fs = require('fs');
 const path = require('path');
 
@@ -76,8 +77,10 @@ app.post('/connect/:instanceId', async (req, res) => {
   try {
     const client = getClient(instanceId);
     
-    client.on('qr', (qr) => {
-      qrCodes.set(instanceId, qr);
+    client.on('qr', async (qr) => {
+      // Gerar QR code como imagem
+      const qrImage = await QRCode.toDataURL(qr, { width: 300 });
+      qrCodes.set(instanceId, qrImage);
     });
     
     // Verificar QR code a cada segundo

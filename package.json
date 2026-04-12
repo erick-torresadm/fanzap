@@ -25,6 +25,7 @@
     "node-fetch": "^3.3.2",
     "node-webpmux": "^3.2.1",
     "puppeteer": "^24.40.0",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-resizable-panels": "^4.9.0",

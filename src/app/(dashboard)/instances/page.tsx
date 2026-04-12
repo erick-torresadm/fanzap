@@ -128,7 +128,7 @@ export default function InstancesPage() {
       }
       
       if (data.qrCode) {
-        setQrCode({ base64: data.qrCode, instanceName });
+        setQrCode({ qrCode: data.qrCode, instanceName });
       }
       
       const pollInterval = setInterval(async () => {
