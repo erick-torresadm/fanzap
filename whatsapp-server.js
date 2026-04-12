@@ -43,7 +43,7 @@ function getClient(instanceId) {
       console.log(`[📩] ${from}: ${body}`);
       
       try {
-        await fetch('https://fanzap.vercel.app/api/webhook', {
+        await fetch('https://fanzap-k8nlqx2jq-ericks-projects-0721799c.vercel.app/api/webhook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -125,20 +125,28 @@ app.post('/send/:instanceId', async (req, res) => {
   try {
     const client = getClient(instanceId);
     
-    let chatId = await client.getNumberId(to);
+    // Formato correto: número@c.us (sem código do país se já tiver 55)
+    // Docs WWEBJS: "Always strip non-digits and include country code"
+    const cleanNumber = to.replace(/\D/g, '');
+    let chatId = `${cleanNumber}@c.us`;
     
-    if (!chatId) {
-      const numberWithCountry = '55' + to.replace(/^55/, '');
-      chatId = await client.getNumberId(numberWithCountry);
+    // Verificar se o número é válido no WhatsApp
+    const isRegistered = await client.isRegisteredUser(chatId);
+    if (!isRegistered) {
+      // Tentar com código do país brasileiro (55) se não tiver
+      const withCountryCode = cleanNumber.length === 12 
+        ? `55${cleanNumber}` 
+        : cleanNumber;
+      chatId = `${withCountryCode}@c.us`;
+      
+      const isRegistered2 = await client.isRegisteredUser(chatId);
+      if (!isRegistered2) {
+        return res.status(400).json({ error: 'Número não encontrado no WhatsApp' });
+      }
     }
     
-    if (!chatId) {
-      console.log('[SEND] Número não encontrado:', to);
-      return res.status(400).json({ error: 'Número não encontrado no WhatsApp', number: to });
-    }
-    
-    console.log('[SEND] Enviando para:', chatId._serialized, 'mensagem:', message);
-    await client.sendMessage(chatId._serialized, message);
+    console.log('[SEND] Enviando para:', chatId, 'mensagem:', message);
+    await client.sendMessage(chatId, message);
     res.json({ status: 'sent' });
   } catch (e) {
     console.error('[SEND ERROR]:', e.message);

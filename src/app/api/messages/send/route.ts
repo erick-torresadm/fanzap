@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const LOCAL_SERVER = 'https://unphotographed-aleena-hurriedly.ngrok-free.dev';
+const LOCAL_SERVER = process.env.LOCAL_SERVER_URL || 'https://unphotographed-aleena-hurriedly.ngrok-free.dev';
 
 export async function POST(request: Request) {
   const { instanceName, number, text } = await request.json();
