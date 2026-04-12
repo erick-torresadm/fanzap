@@ -8,18 +8,24 @@ async function sleep(ms: number) {
 }
 
 async function executeSequence(instanceName: string, to: string, messages: any[]) {
+  const phoneNumber = to.replace(/\D/g, '');
+  
   for (const msg of messages) {
     try {
+      const msgContent = msg.content || msg;
+      console.log(`[SEQUENCE] Enviando para ${phoneNumber}: ${msgContent}`);
+      
       await fetch(`${LOCAL_SERVER}/send/${instanceName}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to, message: msg.content || msg })
+        body: JSON.stringify({ to: phoneNumber, message: msgContent })
       });
-      console.log(`[SEQUENCE] Enviado: ${msg.content || msg}`);
+      console.log(`[SEQUENCE] Enviado com sucesso`);
     } catch (e) {
       console.error('[SEQUENCE] Erro:', e.message);
     }
     if (msg.delay > 0) {
+      console.log(`[SEQUENCE] Aguardando ${msg.delay}s...`);
       await sleep(msg.delay * 1000);
     }
   }
