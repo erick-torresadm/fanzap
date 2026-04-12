@@ -101,7 +101,7 @@ export class EvolutionAPI {
     return response.json();
   }
 
-  async getInstances(): Promise<FetchInstancesResponse[]> {
+async getInstances(): Promise<FetchInstancesResponse[]> {
     const response = await fetch(`${this.baseUrl}/instance/fetchInstances`, {
       method: 'GET',
       headers: this.getHeaders(),
@@ -109,11 +109,34 @@ export class EvolutionAPI {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Failed to get instances' }));
-      throw new Error(error.message || 'Failed to get instances');
+      throw new Error(error.message || error.response?.message || 'Failed to get instances');
     }
 
     const data = await response.json();
     return Array.isArray(data) ? data : [];
+  }
+
+  async fetchNewMessages(instanceName: string, lastId?: string): Promise<any[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/findMessages/${instanceName}?page=1`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ limit: 20 })
+      });
+
+      if (!response.ok) return [];
+      
+      const data = await response.json();
+      const messages = data.records || [];
+      
+      const newMsgs = messages.filter((m: any) => 
+        !m.key?.fromMe && m.id !== lastId
+      );
+      
+      return newMsgs;
+    } catch {
+      return [];
+    }
   }
 
   async deleteInstance(instanceName: string): Promise<void> {
