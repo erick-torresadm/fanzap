@@ -12,8 +12,10 @@ import {
   XCircle,
   Smartphone,
   Wifi,
-  WifiOff
+  WifiOff,
+  Copy
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface Instance {
   id: string;
@@ -29,6 +31,7 @@ interface QRCodeData {
 }
 
 export default function InstancesPage() {
+  const [user, setUser] = useState<any>(null);
   const [instances, setInstances] = useState<Instance[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
@@ -37,6 +40,20 @@ export default function InstancesPage() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [qrCode, setQrCode] = useState<QRCodeData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setUser(data.user);
+        } else {
+          router.push('/login');
+        }
+      })
+      .catch(() => router.push('/login'));
+  }, [router]);
 
   const fetchInstances = useCallback(async () => {
     try {
@@ -81,30 +98,42 @@ export default function InstancesPage() {
       fetchInstances();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro');
-    } finally {
-      setCreating(false);
+} finally {
+      setConnecting(null);
     }
   };
 
-  const handleConnect = async (name: string) => {
+  const handleAutoConnect = async () => {
+    if (!user?.id) return;
     try {
-      setConnecting(name);
+      setConnecting('new');
       setError(null);
-      const res = await fetch(`/api/instances/${name}/qrcode`);
+      const res = await fetch('/api/instances/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
       const data = await res.json();
       
       if (!res.ok) {
-        throw new Error(data.error || 'Falha ao gerar código');
+        throw new Error(data.error || 'Falha ao conectar');
+      }
+      
+      if (data.status === 'connected') {
+        alert('WhatsApp já está conectado!');
+        fetchInstances();
+        return;
       }
       
       setQrCode(data);
       
       const pollInterval = setInterval(async () => {
         try {
-          const statusRes = await fetch(`/api/instances/${name}`);
+          const statusRes = await fetch('/api/instances');
           if (statusRes.ok) {
-            const instanceData = await statusRes.json();
-            if (instanceData.status === 'connected') {
+            const instancesData = await statusRes.json();
+            const myInstance = instancesData.find((i: any) => i.name === data.instanceName);
+            if (myInstance?.status === 'connected') {
               clearInterval(pollInterval);
               setConnecting(null);
               setQrCode(null);
@@ -172,9 +201,9 @@ export default function InstancesPage() {
           <h1 className="text-2xl font-bold font-mono">Instâncias</h1>
           <p className="text-[#6B7280]">Gerencie suas conexões WhatsApp</p>
         </div>
-        <button onClick={() => setShowNew(true)} className="btn btn-primary">
-          <Plus className="w-4 h-4" />
-          Nova Instância
+        <button onClick={handleAutoConnect} disabled={connecting === 'new'} className="btn btn-primary">
+          <QrCode className="w-4 h-4" />
+          Conectar WhatsApp
         </button>
       </div>
 

@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     console.log('========== WEBHOOK RECEIDO ==========');
+    console.log('Full payload:', JSON.stringify(body));
     console.log('Keys do payload:', Object.keys(body));
     console.log('Evento:', body.event);
     console.log('Instance:', body.instance);
