@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const LOCAL_SERVER = 'http://localhost:3001';
+const LOCAL_SERVER = process.env.LOCAL_WHATSAPP_URL || 'http://localhost:3001';
 
 export async function POST(request: Request) {
   const { instanceName, phone, message } = await request.json();

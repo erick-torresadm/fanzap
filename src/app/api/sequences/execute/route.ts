@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sequencesStore } from '@/lib/sequences-store';
 
-const LOCAL_SERVER = 'http://localhost:3001';
+const LOCAL_SERVER = process.env.LOCAL_WHATSAPP_URL || 'http://localhost:3001';
 
 export async function POST(request: Request) {
   const { sequenceId, phoneNumber } = await request.json();

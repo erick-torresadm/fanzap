@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
 
-const LOCAL_SERVER = 'http://localhost:3001';
+const LOCAL_SERVER = process.env.LOCAL_WHATSAPP_URL || 'http://localhost:3001';
 
 export async function GET(request: Request, { params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;

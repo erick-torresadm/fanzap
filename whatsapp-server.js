@@ -127,7 +127,9 @@ app.get('/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 WhatsApp Server NA PORTA ${PORT}`);
-  console.log(`📱 Acesse http://localhost:${PORT}/connect/seu-id para gerar QR code\n`);
+  console.log(`📱 Para conectar com Vercel, Use ngrok:`);
+  console.log(`   ngrok http ${PORT}`);
+  console.log(`   Depois configure a URL do ngrok na Vercel\n`);
 });
