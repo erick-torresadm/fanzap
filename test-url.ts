@@ -1,25 +1,25 @@
 async function test() {
-  const tunnelUrl = 'https://definitely-lookup-honolulu-model.trycloudflare.com';
-  const siteUrl = 'https://fanzap.vercel.app';
+  const url = 'https://experiencing-int-approximate-plenty.trycloudflare.com';
   
-  console.log('=== Teste Tunnel ===');
+  console.log('=== Teste ===');
   try {
-    const res = await fetch(tunnelUrl + '/health');
-    console.log(`GET /health: ${res.status}`);
-    if (res.ok) console.log(await res.json());
+    const res = await fetch(url + '/health');
+    console.log(`Health: ${res.status}`);
+    if (res.ok) {
+      const data = await res.json();
+      console.log(data);
+    }
   } catch (e) { console.log('Erro:', e.message); }
   
-  console.log('\n=== Teste Site ===');
+  // Test connect
   try {
-    const res = await fetch(siteUrl + '/api/instances/local-connect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ instanceId: 'test' })
-    });
-    console.log(`POST /api/instances/local-connect: ${res.status}`);
-    const data = await res.json();
-    console.log(JSON.stringify(data).substring(0, 300));
-  } catch (e) { console.log('Erro:', e.message); }
+    const res = await fetch(url + '/connect/test-user', { method: 'POST' });
+    console.log(`Connect: ${res.status}`);
+    if (res.ok) {
+      const data = await res.json();
+      console.log('QR Code:', data.qrCode?.substring(0, 100));
+    }
+  } catch (e) { console.log('Erro connect:', e.message); }
 }
 
 test();

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sequencesStore } from '@/lib/sequences-store';
 
-const LOCAL_SERVER = 'https://experiencing-int-approximate-plenty.trycloudflare.com';
+const LOCAL_SERVER = 'https://post-ellen-pulse-diversity.trycloudflare.com';
 
 export async function POST(request: Request) {
   const { sequenceId, phoneNumber } = await request.json();
