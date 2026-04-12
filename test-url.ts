@@ -1,32 +1,23 @@
 async function test() {
-  const tunnelUrl = 'https://post-ellen-pulse-diversity.trycloudflare.com';
+  const tunnelUrl = 'https://unphotographed-aleena-hurriedly.ngrok-free.dev';
+  const instanceName = 'fanzap_b74cec06';
   
-  // Test tunnel
-  console.log('=== Teste Tunnel ===');
+  console.log('=== Teste /status ===');
   try {
-    const res = await fetch(tunnelUrl + '/health');
-    console.log(`Health: ${res.status}`);
-  } catch (e) { console.log('Erro:', e.message); }
-  
-  // Test localhost
-  console.log('\n=== Teste Localhost ===');
-  try {
-    const res = await fetch('http://localhost:3001/health');
-    console.log(`Localhost Health: ${res.status}`);
-    if (res.ok) console.log(await res.json());
-  } catch (e) { console.log('Erro:', e.message); }
-  
-  // Test site connect
-  console.log('\n=== Teste Site ===');
-  try {
-    const res = await fetch('https://fanzap.vercel.app/api/instances/connect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: 'b74cec06-d0e3-49f8-95d1-01407473db5a' })
-    });
-    console.log(`Connect: ${res.status}`);
+    const res = await fetch(`${tunnelUrl}/status/${instanceName}`);
+    console.log(`Status: ${res.status}`);
     const data = await res.json();
-    console.log(JSON.stringify(data).substring(0, 300));
+    console.log('Response:', JSON.stringify(data));
+  } catch (e) { console.log('Erro:', e.message); }
+  
+  console.log('\n=== Teste Site /instances ===');
+  try {
+    const res = await fetch('https://fanzap.vercel.app/api/instances', {
+      headers: { 'x-user-id': 'b74cec06-d0e3-49f8-95d1-01407473db5a' }
+    });
+    console.log(`Status: ${res.status}`);
+    const data = await res.json();
+    console.log('Response:', JSON.stringify(data));
   } catch (e) { console.log('Erro:', e.message); }
 }
 
