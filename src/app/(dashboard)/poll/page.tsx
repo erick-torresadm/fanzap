@@ -59,7 +59,7 @@ export default function PollPage() {
           messages.map((m, i) => (
             <div key={i} className="card">
               <div className="flex items-center gap-2">
-                <span className={m.key?.fromMe ? '📤' : '📥'}</span>
+                <span>{String(m.key?.fromMe ? '📤' : '📥')}</span>
                 <span className="text-sm text-[#6B7280]">{m.pushName || m.key?.remoteJid}</span>
               </div>
               <p className="mt-1">{m.message?.conversation || m.message?.extendedTextMessage?.text}</p>

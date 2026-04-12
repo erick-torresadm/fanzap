@@ -1,4 +1,4 @@
-async function test() {
+async function test2() {
   const res = await fetch('https://api.membropro.com.br/chat/findMessages/erickfandim', {
     method: 'POST',
     headers: { 

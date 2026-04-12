@@ -1,61 +1,42 @@
 import { NextResponse } from 'next/server';
-import { evolutionApi } from '@/lib/evolution-api';
 import { sequencesStore } from '@/lib/sequences-store';
 
+const LOCAL_SERVER = 'http://localhost:3001';
+
 export async function POST(request: Request) {
-  try {
-    const { sequenceId, phoneNumber } = await request.json();
-    
-    if (!sequenceId || !phoneNumber) {
-      return NextResponse.json(
-        { error: 'sequenceId e phoneNumber são obrigatórios' },
-        { status: 400 }
-      );
-    }
-    
-    const sequence = sequencesStore.get(sequenceId);
-    
-    if (!sequence) {
-      return NextResponse.json({ error: 'Sequência não encontrada' }, { status: 404 });
-    }
-
-    const instanceName = sequence.instanceId;
-    const cleanPhone = phoneNumber.replace(/\D/g, '');
-    
-    const results = [];
-    
-    for (const msg of sequence.messages) {
-      try {
-        if (msg.type === 'text' || !msg.type) {
-          await evolutionApi.sendMessage(instanceName, cleanPhone, msg.content);
-        } else if (msg.type === 'image' || msg.type === 'video' || msg.type === 'audio') {
-          await evolutionApi.sendMedia(instanceName, cleanPhone, {
-            mediaUrl: msg.mediaUrl,
-            caption: msg.content,
-          });
-        }
-        
-        results.push({ messageId: msg.id, success: true });
-        
-        if (msg.delay > 0) {
-          await new Promise(resolve => setTimeout(resolve, msg.delay));
-        }
-      } catch (err) {
-        results.push({ messageId: msg.id, success: false, error: err instanceof Error ? err.message : 'Erro' });
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      sequenceId,
-      phoneNumber: cleanPhone,
-      results,
-    });
-  } catch (error) {
-    console.error('[API] Error executing sequence:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao executar sequência' },
-      { status: 500 }
-    );
+  const { sequenceId, phoneNumber } = await request.json();
+  
+  if (!sequenceId || !phoneNumber) {
+    return NextResponse.json({ error: 'sequenceId e phoneNumber são obrigatórios' }, { status: 400 });
   }
+  
+  const sequence = sequencesStore.get(sequenceId);
+  if (!sequence) {
+    return NextResponse.json({ error: 'Sequência não encontrada' }, { status: 404 });
+  }
+
+  const cleanPhone = phoneNumber.replace(/\D/g, '');
+  const instanceName = sequence.instanceId;
+  
+  const results = [];
+  
+  for (const msg of sequence.messages) {
+    try {
+      await fetch(`${LOCAL_SERVER}/send/${instanceName}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: cleanPhone, message: msg.content })
+      });
+      
+      results.push({ messageId: msg.id, success: true });
+      
+      if (msg.delay > 0) {
+        await new Promise(resolve => setTimeout(resolve, msg.delay));
+      }
+    } catch {
+      results.push({ messageId: msg.id, success: false });
+    }
+  }
+
+  return NextResponse.json({ success: true, results });
 }
