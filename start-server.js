@@ -8,8 +8,8 @@ const server = spawn('node', ['whatsapp-server.js'], {
 });
 
 setTimeout(() => {
-  console.log('\nIniciando tunnel (Cloudflare)...');
-  const tunnel = spawn('npx', ['cloudflared', 'tunnel', '--url', 'http://localhost:3001'], { 
+  console.log('\nIniciando ngrok (HTTP)...');
+  const tunnel = spawn('npx', ['ngrok', 'http', '3001', '--host-header=localhost:3001'], { 
     cwd: process.cwd(),
     shell: true,
     stdio: 'inherit'

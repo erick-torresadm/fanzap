@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
 
-const LOCAL_SERVER = 'https://separation-pit-stolen-libs.trycloudflare.com';
+const LOCAL_SERVER = 'https://unphotographed-aleena-hurriedly.ngrok-free.dev';
 
 export async function GET(request: Request) {
   try {
