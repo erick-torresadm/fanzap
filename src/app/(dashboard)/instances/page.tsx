@@ -108,24 +108,28 @@ export default function InstancesPage() {
     try {
       setConnecting('new');
       setError(null);
-      const res = await fetch('/api/instances/connect', {
+      const instanceName = `fanzap_${user.id.slice(0, 8)}`;
+      
+      // Usar servidor local
+      const res = await fetch('/api/instances/local-connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ instanceId: instanceName }),
       });
       const data = await res.json();
+      
+      if (data.serverRequired) {
+        setError(data.error);
+        return;
+      }
       
       if (!res.ok) {
         throw new Error(data.error || 'Falha ao conectar');
       }
       
-      if (data.status === 'connected') {
-        alert('WhatsApp já está conectado!');
-        fetchInstances();
-        return;
+      if (data.qrCode) {
+        setQrCode({ base64: data.qrCode, instanceName });
       }
-      
-      setQrCode(data);
       
       const pollInterval = setInterval(async () => {
         try {
