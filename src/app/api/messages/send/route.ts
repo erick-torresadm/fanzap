@@ -1,27 +1,37 @@
 import { NextResponse } from 'next/server';
-import { evolutionApi } from '@/lib/evolution-api';
+
+const LOCAL_SERVER = 'http://localhost:3001';
 
 export async function POST(request: Request) {
+  const { instanceName, number, text } = await request.json();
+
+  if (!instanceName || !number || !text) {
+    return NextResponse.json(
+      { error: 'instanceName, number e text são obrigatórios' },
+      { status: 400 }
+    );
+  }
+
+  const cleanNumber = number.replace(/\D/g, '');
+
   try {
-    const { instanceName, number, text } = await request.json();
+    const res = await fetch(`${LOCAL_SERVER}/send/${instanceName}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: cleanNumber, message: text })
+    });
 
-    if (!instanceName || !number || !text) {
-      return NextResponse.json(
-        { error: 'instanceName, number e text são obrigatórios' },
-        { status: 400 }
-      );
+    const data = await res.json();
+
+    if (!res.ok) {
+      return NextResponse.json(data, { status: res.status });
     }
-
-    const cleanNumber = number.replace(/\D/g, '');
-    
-    await evolutionApi.sendMessage(instanceName, cleanNumber, text);
 
     return NextResponse.json({ success: true, number: cleanNumber });
   } catch (error) {
-    console.error('[API] Error sending message:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Falha ao enviar mensagem' },
-      { status: 500 }
+      { error: 'Servidor local offline' },
+      { status: 503 }
     );
   }
 }

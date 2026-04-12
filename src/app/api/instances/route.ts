@@ -1,97 +1,73 @@
 import { NextResponse } from 'next/server';
-import { getEvolutionApi } from '@/lib/evolution-api-factory';
 import { sql } from '@/lib/database';
 
-async function getUserApiSettings(userId: string) {
-  const result = await sql`SELECT api_url, api_key FROM user_api_settings WHERE user_id = ${userId}`;
-  return result[0] || null;
-}
+const LOCAL_SERVER = 'http://localhost:3001';
 
 export async function GET(request: Request) {
   try {
     const userId = request.headers.get('x-user-id');
     
-    let apiUrl = process.env.EVOLUTION_API_URL || 'https://api.membropro.com.br';
-    let apiKey = process.env.EVOLUTION_API_KEY || 'd6996979cd25b0ebe76ab2fbe509538e';
-    
-    if (userId) {
-      const userSettings = await getUserApiSettings(userId);
-      if (userSettings?.api_url) {
-        apiUrl = userSettings.api_url;
-        apiKey = userSettings.api_key;
-      }
+    if (!userId) {
+      return NextResponse.json({ error: ' userId obrigatório' }, { status: 401 });
     }
-    
-    const evolutionApi = getEvolutionApi(apiUrl, apiKey);
-    console.log('[API] Fetching instances with API:', apiUrl);
-    
-    const response = await evolutionApi.getInstances();
-    console.log('[API] Raw response:', JSON.stringify(response));
-    
-    if (!response || response.length === 0) {
-      console.log('[API] No instances returned');
+
+    // Buscar instâncias do banco
+    const instancesResult = await sql`
+      SELECT instance_name FROM user_instances WHERE user_id = ${userId}
+    `;
+
+    if (!instancesResult || instancesResult.length === 0) {
       return NextResponse.json([]);
     }
-    
-    const instances = response.map((item: any) => {
-      const name = item.name || item.instanceName;
-      const phoneNumber = item.ownerJid?.replace('@s.whatsapp.net', '') || item.owner?.replace('@s.whatsapp.net', '') || '';
-      const status = evolutionApi.mapStatus(item.connectionStatus || item.status || 'close');
-      
-      return {
-        id: item.id || name,
-        name: name,
-        status,
-        phoneNumber,
-      };
-    });
+
+    // Verificar status no servidor local
+    const instances = [];
+    for (const inst of instancesResult) {
+      try {
+        const res = await fetch(`${LOCAL_SERVER}/status/${inst.instance_name}`);
+        const statusData = await res.json();
+        
+        instances.push({
+          name: inst.instance_name,
+          status: statusData.status === 'connected' ? 'connected' : 'disconnected'
+        });
+      } catch {
+        instances.push({
+          name: inst.instance_name,
+          status: 'offline'
+        });
+      }
+    }
 
     return NextResponse.json(instances);
   } catch (error) {
-    console.error('[API] Error fetching instances:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch instances' },
-      { status: 500 }
-    );
+    console.error('[Instances] Error:', error);
+    return NextResponse.json([]);
   }
 }
 
 export async function POST(request: Request) {
+  const userId = request.headers.get('x-user-id');
+  const { name } = await request.json();
+
+  if (!userId || !name) {
+    return NextResponse.json({ error: 'userId e name obrigatórios' }, { status: 400 });
+  }
+
   try {
-    const userId = request.headers.get('x-user-id');
-    const { name } = await request.json();
+    // Criar instância no servidor local (vai iniciar o cliente)
+    const res = await fetch(`${LOCAL_SERVER}/connect/${name}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
 
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Instance name is required' },
-        { status: 400 }
-      );
-    }
+    const data = await res.json();
 
-    let apiUrl = process.env.EVOLUTION_API_URL || 'https://api.membropro.com.br';
-    let apiKey = process.env.EVOLUTION_API_KEY || 'd6996979cd25b0ebe76ab2fbe509538e';
-    
-    if (userId) {
-      const userSettings = await getUserApiSettings(userId);
-      if (userSettings?.api_url) {
-        apiUrl = userSettings.api_url;
-        apiKey = userSettings.api_key;
-      }
-    }
-    
-    const evolutionApi = getEvolutionApi(apiUrl, apiKey);
-    const result = await evolutionApi.createInstance(name);
-    
     return NextResponse.json({
-      id: result.instance.instanceId,
-      name: result.instance.instanceName,
-      status: 'connecting',
+      name: name,
+      status: data.status || 'connecting'
     });
   } catch (error) {
-    console.error('[API] Error creating instance:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create instance' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Servidor offline' }, { status: 503 });
   }
 }
